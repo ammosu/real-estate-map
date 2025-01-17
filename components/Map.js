@@ -4,16 +4,14 @@ import L from 'leaflet';
 import 'leaflet.markercluster';
 import 'leaflet/dist/leaflet.css';
 
-// 修正 Leaflet 預設圖標路徑問題
 delete L.Icon.Default.prototype._getIconUrl;
 
-// 創建自定義圖標函數
 const createCustomIcon = (error) => {
   let color;
-  if (error <= 5) color = '#10B981'; // green-500
-  else if (error <= 10) color = '#FBBF24'; // yellow-400
-  else if (error <= 15) color = '#F97316'; // orange-500
-  else color = '#EF4444'; // red-500
+  if (error <= 5) color = '#10B981';
+  else if (error <= 10) color = '#FBBF24';
+  else if (error <= 15) color = '#F97316';
+  else color = '#EF4444';
 
   return L.divIcon({
     className: 'custom-div-icon',
@@ -43,6 +41,7 @@ export default function Map({ data }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerClusterRef = useRef(null);
+  const currentViewRef = useRef(null); // 保存當前視角的ref
 
   useEffect(() => {
     if (!mapInstanceRef.current) {
@@ -54,7 +53,7 @@ export default function Map({ data }) {
         attribution: '© OpenStreetMap contributors'
       }).addTo(mapInstanceRef.current);
 
-      // 初始化標記群集，使用更大的群集圖標
+      // 初始化標記群集
       markerClusterRef.current = L.markerClusterGroup({
         iconCreateFunction: function(cluster) {
           const childMarkers = cluster.getAllChildMarkers();
@@ -94,14 +93,24 @@ export default function Map({ data }) {
             iconAnchor: [25, 25]
           });
         },
-        maxClusterRadius: 80, // 調整群集半徑
+        maxClusterRadius: 80,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: true,
         zoomToBoundsOnClick: true
       }).addTo(mapInstanceRef.current);
+
+      // 監聽地圖移動和縮放事件
+      mapInstanceRef.current.on('moveend', () => {
+        if (mapInstanceRef.current) {
+          currentViewRef.current = {
+            center: mapInstanceRef.current.getCenter(),
+            zoom: mapInstanceRef.current.getZoom()
+          };
+        }
+      });
     }
 
-    // 更新標記
+    // 更新標記，並保持當前視角
     if (data && data.length > 0) {
       updateMarkers(data);
     }
@@ -117,6 +126,12 @@ export default function Map({ data }) {
   // 更新標記
   const updateMarkers = (data) => {
     if (!markerClusterRef.current) return;
+
+    // 保存當前視角
+    const currentView = currentViewRef.current || {
+      center: [23.5, 121],
+      zoom: 7
+    };
 
     markerClusterRef.current.clearLayers();
 
@@ -146,6 +161,13 @@ export default function Map({ data }) {
 
       markerClusterRef.current.addLayer(marker);
     });
+
+    // 恢復先前的視角
+    if (mapInstanceRef.current && currentView) {
+      mapInstanceRef.current.setView(currentView.center, currentView.zoom, {
+        animate: false
+      });
+    }
   };
 
   return <div ref={mapRef} className="h-full w-full" />;
