@@ -5,6 +5,8 @@ import { generateSampleData } from './sampleData';
 import { cn } from '@/lib/utils';
 import RangeSlider from './RangeSlider';
 import CsvUploader from './CsvUploader';
+// 動態導入P5背景組件
+const P5Background = dynamic(() => import('./P5Background'), { ssr: false });
 
 // 動態載入地圖組件
 const Map = dynamic(() => import('./Map'), {
@@ -29,6 +31,7 @@ export default function RealEstateMap() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [dataSource, setDataSource] = useState('sample'); // 'sample' or 'uploaded'
+  const [showEffects, setShowEffects] = useState(true); // 控制特效的顯示
 
   // 生成並存儲樣本數據（只在組件首次加載時生成一次）
   const [sampleData, setSampleData] = useState([]);
@@ -202,12 +205,26 @@ export default function RealEstateMap() {
   };
 
   return (
-    <div className="p-3 md:p-6 max-w-7xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg">
+    <div className="p-3 md:p-6 max-w-7xl mx-auto relative">
+      {/* 添加P5背景，只有當showEffects為true時才顯示 */}
+      {showEffects && <P5Background className="" />}
+      
+      <div className="bg-white/70 backdrop-blur-sm rounded-lg shadow-lg relative">
         <div className="border-b p-4 md:p-6 flex flex-wrap items-center justify-between">
           <h2 className="text-xl md:text-2xl font-bold">房地產估價地圖</h2>
           
           <div className="flex space-x-2">
+            {/* 特效切換按鈕 */}
+            <button 
+              className={`px-3 py-2 ${showEffects ? 'bg-purple-500' : 'bg-gray-400'} text-white rounded-md flex items-center gap-2`}
+              onClick={() => setShowEffects(!showEffects)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707.707-.707A1 1 0 0115 2a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 01-1 1 1 1 0 01-.707-.293l-.707-.707-.707.707A1 1 0 0112 8a1 1 0 01-1-1V6h-1a1 1 0 110-2h1V3a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              視覺特效
+            </button>
+            
             {/* 上傳 CSV 按鈕 */}
             <button 
               className="px-3 py-2 bg-green-500 text-white rounded-md flex items-center gap-2"
@@ -427,6 +444,7 @@ export default function RealEstateMap() {
                   <li>• 拖曳移動地圖位置</li>
                   <li>• 使用篩選條件精確查詢</li>
                   <li>• 拖動滑塊兩端調整數值範圍</li>
+                  <li>• 可以開啟/關閉視覺特效</li>
                 </ul>
               </div>
             </div>
