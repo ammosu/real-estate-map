@@ -22,7 +22,18 @@ const Map = dynamic(() => import('./Map'), {
 });
 
 export default function RealEstateMap() {
-  const [selectedTimeRange, setSelectedTimeRange] = useState('all');
+  const [timeRange, setTimeRange] = useState(() => {
+    // 設定最小日期為 2024/01/01
+    const minDate = new Date('2024-01-01').getTime();
+    // 預設結束日期為當前時間
+    const endDate = new Date();
+    // 預設開始日期為最近6個月，但不早於 2024/01/01
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(endDate.getMonth() - 6);
+    const startDate = Math.max(sixMonthsAgo.getTime(), minDate);
+    
+    return [startDate, endDate.getTime()];
+  });
   const [priceRange, setPriceRange] = useState([0, 50000000]);
   const [errorRange, setErrorRange] = useState([0, 20]);
   const [data, setData] = useState([]);
@@ -106,39 +117,27 @@ export default function RealEstateMap() {
     return () => {
       window.clearTimeout(timerId);
     };
-  }, [sampleData, uploadedData, dataSource, selectedTimeRange, priceRange[0], priceRange[1], errorRange[0], errorRange[1]]);
+  }, [sampleData, uploadedData, dataSource, timeRange[0], timeRange[1], priceRange[0], priceRange[1], errorRange[0], errorRange[1]]);
 
   // 安全的過濾函數
   const filterData = (data) => {
     if (!Array.isArray(data)) return [];
-    
-    const now = new Date();
-    const filterDate = new Date();
-    
-    if (selectedTimeRange !== 'all') {
-      switch (selectedTimeRange) {
-        case '1month':
-          filterDate.setMonth(now.getMonth() - 1);
-          break;
-        case '3months':
-          filterDate.setMonth(now.getMonth() - 3);
-          break;
-        case '6months':
-          filterDate.setMonth(now.getMonth() - 6);
-          break;
-        default:
-          break;
-      }
-    }
     
     return data.filter(item => {
       // 確保資料存在
       if (!item) return false;
       
       // 時間過濾
-      if (selectedTimeRange !== 'all') {
+      if (Array.isArray(timeRange) && timeRange.length === 2) {
         try {
-          if (new Date(item.date) < filterDate) {
+          const itemDate = new Date(item.date).getTime();
+          // 檢查最小值
+          if (itemDate < timeRange[0]) {
+            return false;
+          }
+          
+          // 檢查最大值
+          if (itemDate > timeRange[1]) {
             return false;
           }
         } catch (e) {
@@ -215,6 +214,12 @@ export default function RealEstateMap() {
   // 格式化價格顯示
   const formatPrice = (value) => {
     return value.toLocaleString('zh-TW');
+  };
+  
+  // 格式化日期顯示
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
   };
 
   return (
@@ -369,16 +374,18 @@ export default function RealEstateMap() {
                   </svg>
                   時間範圍:
                 </label>
-                <select
-                  value={selectedTimeRange}
-                  onChange={(e) => setSelectedTimeRange(e.target.value)}
-                  className="w-full p-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                  <option value="all">全部時間</option>
-                  <option value="1month">最近一個月</option>
-                  <option value="3months">最近三個月</option>
-                  <option value="6months">最近半年</option>
-                </select>
+                <RangeSlider
+                  value={timeRange}
+                  onChange={setTimeRange}
+                  min={new Date('2024-01-01').getTime()}
+                  max={(() => {
+                    // 設定最大值為當前時間
+                    return new Date().getTime();
+                  })()}
+                  step={86400000} // 一天的毫秒數
+                  formatValue={formatDate}
+                  allowNoLimit={true}
+                />
               </div>
 
               {/* 價格範圍滑塊 */}
