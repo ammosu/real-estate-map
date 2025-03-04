@@ -219,7 +219,13 @@ export default function RealEstateMap() {
   // 格式化日期顯示
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    
+    // 為了支持 HTML5 日期輸入框，需要返回 YYYY-MM-DD 格式
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
   };
 
   return (
@@ -374,18 +380,59 @@ export default function RealEstateMap() {
                   </svg>
                   時間範圍:
                 </label>
-                <RangeSlider
-                  value={timeRange}
-                  onChange={setTimeRange}
-                  min={new Date('2024-01-01').getTime()}
-                  max={(() => {
-                    // 設定最大值為當前時間
-                    return new Date().getTime();
-                  })()}
-                  step={86400000} // 一天的毫秒數
-                  formatValue={formatDate}
-                  allowNoLimit={true}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">開始日期</label>
+                    <input
+                      type="date"
+                      className="w-full p-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      value={formatDate(timeRange[0])}
+                      min="2024-01-01"
+                      max={formatDate(new Date().getTime())}
+                      onChange={(e) => {
+                        try {
+                          const date = new Date(e.target.value);
+                          if (!isNaN(date.getTime())) {
+                            // 確保開始日期不晚於結束日期
+                            const endDate = timeRange[1];
+                            if (date.getTime() <= endDate) {
+                              setTimeRange([date.getTime(), endDate]);
+                            } else {
+                              // 如果開始日期晚於結束日期，將結束日期設為開始日期
+                              setTimeRange([date.getTime(), date.getTime()]);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('日期解析錯誤:', error);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">結束日期</label>
+                    <input
+                      type="date"
+                      className="w-full p-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      value={formatDate(timeRange[1])}
+                      min={formatDate(timeRange[0])}
+                      max={formatDate(new Date().getTime())}
+                      onChange={(e) => {
+                        try {
+                          const date = new Date(e.target.value);
+                          if (!isNaN(date.getTime())) {
+                            // 確保結束日期不早於開始日期
+                            const startDate = timeRange[0];
+                            if (date.getTime() >= startDate) {
+                              setTimeRange([startDate, date.getTime()]);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('日期解析錯誤:', error);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* 價格範圍滑塊 */}
@@ -405,6 +452,8 @@ export default function RealEstateMap() {
                   formatValue={formatPrice}
                   unit=" 元"
                   allowNoLimit={true}
+                  allowManualInput={true}
+                  inputType="number"
                 />
               </div>
 
@@ -424,6 +473,8 @@ export default function RealEstateMap() {
                   step={1}
                   unit="%"
                   allowNoLimit={true}
+                  allowManualInput={true}
+                  inputType="number"
                 />
               </div>
             </div>

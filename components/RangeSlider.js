@@ -25,8 +25,11 @@ function debounce(func, wait) {
  * @param {number} props.max 滑塊最大可選值
  * @param {number} props.step 滑塊步進值
  * @param {Function} props.formatValue 格式化顯示值的函數
+ * @param {Function} props.parseValue 解析輸入值的函數 (可選)
  * @param {string} props.unit 值的單位
  * @param {boolean} props.allowNoLimit 是否允許無上限選項
+ * @param {boolean} props.allowManualInput 是否允許手動輸入 (可選)
+ * @param {string} props.inputType 輸入框類型 (可選，預設為 'text')
  */
 const RangeSlider = ({
   value,
@@ -35,8 +38,11 @@ const RangeSlider = ({
   max,
   step,
   formatValue = (val) => val.toString(),
+  parseValue = (val) => Number(val),
   unit = '',
-  allowNoLimit = false
+  allowNoLimit = false,
+  allowManualInput = false,
+  inputType = 'text'
 }) => {
   // 確保值在有效範圍內
   const [minValue, maxValue] = value;
@@ -45,6 +51,11 @@ const RangeSlider = ({
   // 內部狀態用於即時更新 UI
   const [localMinValue, setLocalMinValue] = useState(minValue);
   const [localMaxValue, setLocalMaxValue] = useState(maxValue);
+  
+  // 用於手動輸入的狀態
+  const [minInputValue, setMinInputValue] = useState(formatValue(minValue));
+  const [maxInputValue, setMaxInputValue] = useState(formatValue(maxValue));
+  const [inputError, setInputError] = useState('');
   
   // 使用 useRef 存儲防抖函數，避免重新創建
   const debouncedOnChange = useRef(
@@ -57,35 +68,124 @@ const RangeSlider = ({
   useEffect(() => {
     setLocalMinValue(minValue);
     setLocalMaxValue(maxValue);
-  }, [minValue, maxValue]);
+    setMinInputValue(formatValue(minValue));
+    setMaxInputValue(formatValue(maxValue));
+  }, [minValue, maxValue, formatValue]);
   
   // 當啟用無上限時，將最大值設為最大可能值
   useEffect(() => {
     if (noUpperLimit) {
       onChange([minValue, max]);
     }
-  }, [noUpperLimit]);
+  }, [noUpperLimit, onChange, minValue, max]);
   
-  // 處理最小值變化
+  // 處理滑塊最小值變化
   const handleMinChange = useCallback((e) => {
     const newMin = Number(e.target.value);
     if (newMin < localMaxValue) {
       setLocalMinValue(newMin);
+      setMinInputValue(formatValue(newMin));
       debouncedOnChange(newMin, localMaxValue);
     }
-  }, [localMaxValue, debouncedOnChange]);
+  }, [localMaxValue, debouncedOnChange, formatValue]);
   
-  // 處理最大值變化
+  // 處理滑塊最大值變化
   const handleMaxChange = useCallback((e) => {
     if (noUpperLimit) return;
     const newMax = Number(e.target.value);
     if (newMax > localMinValue) {
       setLocalMaxValue(newMax);
+      setMaxInputValue(formatValue(newMax));
       debouncedOnChange(localMinValue, newMax);
     }
-  }, [localMinValue, noUpperLimit, debouncedOnChange]);
+  }, [localMinValue, noUpperLimit, debouncedOnChange, formatValue]);
   
-  // 簡單的範圍選擇器實現 - 使用兩個獨立的輸入控件
+  // 處理手動輸入最小值
+  const handleMinInputChange = useCallback((e) => {
+    const inputVal = e.target.value;
+    setMinInputValue(inputVal);
+  }, []);
+  
+  // 處理手動輸入最大值
+  const handleMaxInputChange = useCallback((e) => {
+    const inputVal = e.target.value;
+    setMaxInputValue(inputVal);
+  }, []);
+  
+  // 處理最小值輸入框失去焦點
+  const handleMinInputBlur = useCallback(() => {
+    try {
+      const newMin = parseValue(minInputValue);
+      
+      // 驗證輸入值
+      if (isNaN(newMin)) {
+        throw new Error('請輸入有效的值');
+      }
+      
+      if (newMin < min) {
+        throw new Error(`最小值不能小於 ${formatValue(min)}`);
+      }
+      
+      if (newMin >= localMaxValue && !noUpperLimit) {
+        throw new Error('最小值必須小於最大值');
+      }
+      
+      // 更新值
+      setLocalMinValue(newMin);
+      setMinInputValue(formatValue(newMin));
+      debouncedOnChange(newMin, localMaxValue);
+      setInputError('');
+    } catch (error) {
+      setInputError(error.message);
+      // 恢復為原始值
+      setMinInputValue(formatValue(localMinValue));
+    }
+  }, [minInputValue, parseValue, min, localMaxValue, noUpperLimit, formatValue, debouncedOnChange]);
+  
+  // 處理最大值輸入框失去焦點
+  const handleMaxInputBlur = useCallback(() => {
+    if (noUpperLimit) return;
+    
+    try {
+      const newMax = parseValue(maxInputValue);
+      
+      // 驗證輸入值
+      if (isNaN(newMax)) {
+        throw new Error('請輸入有效的值');
+      }
+      
+      if (newMax > max) {
+        throw new Error(`最大值不能大於 ${formatValue(max)}`);
+      }
+      
+      if (newMax <= localMinValue) {
+        throw new Error('最大值必須大於最小值');
+      }
+      
+      // 更新值
+      setLocalMaxValue(newMax);
+      setMaxInputValue(formatValue(newMax));
+      debouncedOnChange(localMinValue, newMax);
+      setInputError('');
+    } catch (error) {
+      setInputError(error.message);
+      // 恢復為原始值
+      setMaxInputValue(formatValue(localMaxValue));
+    }
+  }, [maxInputValue, parseValue, max, localMinValue, noUpperLimit, formatValue, debouncedOnChange]);
+  
+  // 處理輸入框按下 Enter 鍵
+  const handleInputKeyDown = useCallback((e, isMin) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isMin) {
+        handleMinInputBlur();
+      } else {
+        handleMaxInputBlur();
+      }
+    }
+  }, [handleMinInputBlur, handleMaxInputBlur]);
+  
   return (
     <div className="mb-6">
       <div className="flex justify-between mb-2 px-2">
@@ -112,6 +212,13 @@ const RangeSlider = ({
         </div>
       )}
       
+      {/* 錯誤提示 */}
+      {inputError && (
+        <div className="mb-2 px-2">
+          <p className="text-sm text-red-500">{inputError}</p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 gap-4">
         {/* 最小值選擇器 */}
         <div>
@@ -123,8 +230,23 @@ const RangeSlider = ({
             step={step}
             value={localMinValue}
             onChange={handleMinChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500 mb-2"
           />
+          
+          {/* 手動輸入框 */}
+          {allowManualInput && (
+            <div className="mt-1">
+              <input
+                type={inputType}
+                value={minInputValue}
+                onChange={handleMinInputChange}
+                onBlur={handleMinInputBlur}
+                onKeyDown={(e) => handleInputKeyDown(e, true)}
+                className="w-full p-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder={`最小${unit}`}
+              />
+            </div>
+          )}
         </div>
         
         {/* 最大值選擇器 */}
@@ -138,8 +260,24 @@ const RangeSlider = ({
             value={localMaxValue}
             onChange={handleMaxChange}
             disabled={noUpperLimit}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500 mb-2"
           />
+          
+          {/* 手動輸入框 */}
+          {allowManualInput && (
+            <div className="mt-1">
+              <input
+                type={inputType}
+                value={noUpperLimit ? "不限" : maxInputValue}
+                onChange={handleMaxInputChange}
+                onBlur={handleMaxInputBlur}
+                onKeyDown={(e) => handleInputKeyDown(e, false)}
+                disabled={noUpperLimit}
+                className="w-full p-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder={`最大${unit}`}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
