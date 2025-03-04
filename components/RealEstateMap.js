@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { generateSampleData } from './sampleData';
 import { cn } from '@/lib/utils';
 import RangeSlider from './RangeSlider';
+import CsvUploader from './CsvUploader';
 
 // 動態載入地圖組件
 const Map = dynamic(() => import('./Map'), {
@@ -26,9 +27,13 @@ export default function RealEstateMap() {
   const [loading, setLoading] = useState(false);
   const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [dataSource, setDataSource] = useState('sample'); // 'sample' or 'uploaded'
 
   // 生成並存儲樣本數據（只在組件首次加載時生成一次）
   const [sampleData, setSampleData] = useState([]);
+  // 存儲上傳的 CSV 數據
+  const [uploadedData, setUploadedData] = useState([]);
   
   useEffect(() => {
     try {
@@ -42,10 +47,21 @@ export default function RealEstateMap() {
     }
   }, []);  // 空依賴數組，確保只執行一次
 
+  // 處理上傳的 CSV 數據
+  const handleCsvDataLoaded = (csvData) => {
+    setUploadedData(csvData);
+    setDataSource('uploaded');
+    setIsUploadModalOpen(false);
+  };
+
   // 載入並過濾資料
   useEffect(() => {
-    // 避免重複設置加載狀態或在樣本數據未準備好時執行
-    if (loading || sampleData.length === 0) return;
+    // 避免重複設置加載狀態
+    if (loading) return;
+    
+    // 確保有數據可以過濾
+    const sourceData = dataSource === 'sample' ? sampleData : uploadedData;
+    if (sourceData.length === 0) return;
     
     setLoading(true);
     console.log("開始過濾數據");
@@ -54,7 +70,7 @@ export default function RealEstateMap() {
     const timerId = window.setTimeout(() => {
       // 防禦性程式設計
       try {
-        const filteredData = filterData(sampleData) || [];
+        const filteredData = filterData(sourceData) || [];
         console.log("過濾後數據:", filteredData.length, "個點");
         setData(filteredData);
       } catch (error) {
@@ -71,7 +87,7 @@ export default function RealEstateMap() {
     return () => {
       window.clearTimeout(timerId);
     };
-  }, [sampleData, selectedTimeRange, priceRange[0], priceRange[1], errorRange[0], errorRange[1]]);
+  }, [sampleData, uploadedData, dataSource, selectedTimeRange, priceRange[0], priceRange[1], errorRange[0], errorRange[1]]);
 
   // 安全的過濾函數
   const filterData = (data) => {
@@ -176,17 +192,73 @@ export default function RealEstateMap() {
         <div className="border-b p-4 md:p-6 flex flex-wrap items-center justify-between">
           <h2 className="text-xl md:text-2xl font-bold">房地產估價地圖</h2>
           
-          {/* 移動端篩選器按鈕 */}
-          <button 
-            className="md:hidden px-3 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
-            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            篩選條件
-          </button>
+          <div className="flex space-x-2">
+            {/* 上傳 CSV 按鈕 */}
+            <button 
+              className="px-3 py-2 bg-green-500 text-white rounded-md flex items-center gap-2"
+              onClick={() => setIsUploadModalOpen(!isUploadModalOpen)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              上傳 CSV
+            </button>
+            
+            {/* 移動端篩選器按鈕 */}
+            <button 
+              className="md:hidden px-3 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
+              onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              篩選條件
+            </button>
+          </div>
         </div>
+
+        {/* CSV 上傳模態框 */}
+        {isUploadModalOpen && (
+          <div className="border-b p-4 md:p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">上傳 CSV 數據</h3>
+              <button 
+                onClick={() => setIsUploadModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <CsvUploader onDataLoaded={handleCsvDataLoaded} />
+            
+            <div className="mt-4 flex justify-between items-center">
+              <div className="text-sm text-gray-500">
+                {uploadedData.length > 0 && (
+                  <span>已上傳 {uploadedData.length} 筆數據</span>
+                )}
+              </div>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setDataSource('sample')}
+                  className={`px-3 py-1 rounded text-sm ${dataSource === 'sample' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                >
+                  使用樣本數據
+                </button>
+                <button
+                  onClick={() => setDataSource('uploaded')}
+                  className={`px-3 py-1 rounded text-sm ${dataSource === 'uploaded' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                  disabled={uploadedData.length === 0}
+                >
+                  使用上傳數據
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={cn(
           "transition-all duration-300 overflow-hidden md:h-auto border-b",
@@ -273,6 +345,8 @@ export default function RealEstateMap() {
               <div className="mt-2 text-sm text-gray-500">
                 {loading ? '載入中...' : `顯示 ${data.length} 個數據點`}
                 {data.length === 0 && !loading ? ' (沒有符合條件的數據)' : ''}
+                {dataSource === 'uploaded' && uploadedData.length > 0 ? ' (使用上傳數據)' : ''}
+                {dataSource === 'sample' ? ' (使用樣本數據)' : ''}
               </div>
             </div>
 
