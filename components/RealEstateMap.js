@@ -2,83 +2,277 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { generateSampleData } from './sampleData';
+import { cn } from '@/lib/utils';
+import RangeSlider from './RangeSlider';
 
 // 動態載入地圖組件
 const Map = dynamic(() => import('./Map'), {
   ssr: false,
-  loading: () => <div>Loading map...</div>
+  loading: () => (
+    <div className="h-[600px] rounded border flex items-center justify-center bg-gray-100">
+      <div className="text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
+        <p className="mt-2 text-gray-600">載入地圖中...</p>
+      </div>
+    </div>
+  ),
 });
 
 export default function RealEstateMap() {
   const [selectedTimeRange, setSelectedTimeRange] = useState('all');
+  const [priceRange, setPriceRange] = useState([0, 50000000]);
+  const [errorRange, setErrorRange] = useState([0, 20]);
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // 生成並存儲樣本數據（只在組件首次加載時生成一次）
+  const [sampleData, setSampleData] = useState([]);
+  
+  useEffect(() => {
+    try {
+      console.log("生成樣本數據");
+      const generatedData = generateSampleData();
+      console.log("生成的樣本數據:", generatedData.length, "個點");
+      setSampleData(generatedData);
+    } catch (error) {
+      console.error("生成樣本數據錯誤:", error);
+      setSampleData([]);
+    }
+  }, []);  // 空依賴數組，確保只執行一次
 
   // 載入並過濾資料
   useEffect(() => {
-    const sampleData = generateSampleData();
-    const filteredData = filterDataByTimeRange(sampleData, selectedTimeRange);
-    setData(filteredData);
-  }, [selectedTimeRange]);
+    // 避免重複設置加載狀態或在樣本數據未準備好時執行
+    if (loading || sampleData.length === 0) return;
+    
+    setLoading(true);
+    console.log("開始過濾數據");
+    
+    // 使用 window.setTimeout 確保清理能正常工作
+    const timerId = window.setTimeout(() => {
+      // 防禦性程式設計
+      try {
+        const filteredData = filterData(sampleData) || [];
+        console.log("過濾後數據:", filteredData.length, "個點");
+        setData(filteredData);
+      } catch (error) {
+        console.error("數據處理錯誤:", error);
+        // 發生錯誤時設置空數組
+        setData([]);
+      }
+      
+      // 無論如何，都將加載狀態設為 false
+      setLoading(false);
+    }, 500);
+    
+    // 清理函數
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [sampleData, selectedTimeRange, priceRange[0], priceRange[1], errorRange[0], errorRange[1]]);
 
-  // 根據時間範圍過濾資料
-  const filterDataByTimeRange = (data, timeRange) => {
+  // 安全的過濾函數
+  const filterData = (data) => {
+    if (!Array.isArray(data)) return [];
+    
     const now = new Date();
     const filterDate = new Date();
     
-    switch (timeRange) {
-      case '1month':
-        filterDate.setMonth(now.getMonth() - 1);
-        break;
-      case '3months':
-        filterDate.setMonth(now.getMonth() - 3);
-        break;
-      case '6months':
-        filterDate.setMonth(now.getMonth() - 6);
-        break;
-      default:
-        return data;
+    if (selectedTimeRange !== 'all') {
+      switch (selectedTimeRange) {
+        case '1month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+        case '3months':
+          filterDate.setMonth(now.getMonth() - 3);
+          break;
+        case '6months':
+          filterDate.setMonth(now.getMonth() - 6);
+          break;
+        default:
+          break;
+      }
     }
-
-    return data.filter(item => new Date(item.date) >= filterDate);
+    
+    return data.filter(item => {
+      // 確保數據存在
+      if (!item) return false;
+      
+      // 時間過濾
+      if (selectedTimeRange !== 'all') {
+        try {
+          if (new Date(item.date) < filterDate) {
+            return false;
+          }
+        } catch (e) {
+          console.warn("日期解析錯誤", e);
+          return false;
+        }
+      }
+      
+      // 價格範圍過濾
+      if (Array.isArray(priceRange) && priceRange.length === 2) {
+        if (item.actualPrice < priceRange[0] || item.actualPrice > priceRange[1]) {
+          return false;
+        }
+      }
+      
+      // 誤差範圍過濾
+      if (Array.isArray(errorRange) && errorRange.length === 2) {
+        if (item.error < errorRange[0] || item.error > errorRange[1]) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
   };
 
-  // 計算統計資料
+  // 安全的統計計算
   const stats = React.useMemo(() => {
-    if (!data.length) return { avgError: 0, count: 0 };
-    
-    const totalError = data.reduce((sum, item) => sum + item.error, 0);
-    return {
-      avgError: (totalError / data.length).toFixed(2),
-      count: data.length
+    const defaultStats = { 
+      avgError: 0, 
+      count: 0, 
+      minPrice: 0, 
+      maxPrice: 0, 
+      avgPrice: 0 
     };
+    
+    if (!Array.isArray(data) || data.length === 0) return defaultStats;
+    
+    try {
+      const totalError = data.reduce((sum, item) => sum + (item?.error || 0), 0);
+      const prices = data.map(item => item?.actualPrice || 0).filter(p => p > 0);
+      
+      if (prices.length === 0) return defaultStats;
+      
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+      
+      return {
+        avgError: (totalError / data.length).toFixed(2),
+        count: data.length,
+        minPrice: minPrice.toLocaleString('zh-TW'),
+        maxPrice: maxPrice.toLocaleString('zh-TW'),
+        avgPrice: Math.round(avgPrice).toLocaleString('zh-TW')
+      };
+    } catch (e) {
+      console.error("統計計算錯誤", e);
+      return defaultStats;
+    }
   }, [data]);
 
+  // 格式化價格顯示
+  const formatPrice = (value) => {
+    return value.toLocaleString('zh-TW');
+  };
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 md:p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-lg shadow-lg">
-        <div className="border-b p-6">
-          <h2 className="text-2xl font-bold">房地產估價地圖</h2>
+        <div className="border-b p-4 md:p-6 flex flex-wrap items-center justify-between">
+          <h2 className="text-xl md:text-2xl font-bold">房地產估價地圖</h2>
+          
+          {/* 移動端篩選器按鈕 */}
+          <button 
+            className="md:hidden px-3 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
+            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            篩選條件
+          </button>
         </div>
 
-        <div className="p-6">
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">時間範圍:</label>
-            <select
-              value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value)}
-              className="w-full p-2 border rounded shadow-sm"
+        <div className={cn(
+          "transition-all duration-300 overflow-hidden md:h-auto border-b",
+          isMobileFilterOpen ? "max-h-[500px]" : "max-h-0 md:max-h-[500px]"
+        )}>
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 時間範圍選擇 */}
+            <div>
+              <label className="block text-sm font-medium mb-2">時間範圍:</label>
+              <select
+                value={selectedTimeRange}
+                onChange={(e) => setSelectedTimeRange(e.target.value)}
+                className="w-full p-2 border rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">全部時間</option>
+                <option value="1month">最近一個月</option>
+                <option value="3months">最近三個月</option>
+                <option value="6months">最近半年</option>
+              </select>
+            </div>
+
+            {/* 價格範圍滑塊 */}
+            <div>
+              <label className="block text-sm font-medium mb-2">價格範圍:</label>
+              <RangeSlider
+                value={priceRange}
+                onChange={setPriceRange}
+                min={0}
+                max={100000000}
+                step={1000000}
+                formatValue={formatPrice}
+                unit=" 元"
+              />
+            </div>
+
+            {/* 誤差範圍滑塊 */}
+            <div>
+              <label className="block text-sm font-medium mb-2">誤差範圍:</label>
+              <RangeSlider
+                value={errorRange}
+                onChange={setErrorRange}
+                min={0}
+                max={20}
+                step={1}
+                unit="%"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 md:p-6">
+          {/* 地圖控制項 */}
+          <div className="mb-4 flex justify-end space-x-2">
+            <button
+              onClick={() => setMapView('map')}
+              className={`px-3 py-1 rounded ${mapView === 'map' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
             >
-              <option value="all">全部時間</option>
-              <option value="1month">最近一個月</option>
-              <option value="3months">最近三個月</option>
-              <option value="6months">最近半年</option>
-            </select>
+              標準地圖
+            </button>
+            <button
+              onClick={() => setMapView('satellite')}
+              className={`px-3 py-1 rounded ${mapView === 'satellite' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            >
+              衛星影像
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <div className="lg:col-span-3">
-              <div className="h-[600px] rounded border">
-                <Map data={data} />
+              {/* 地圖容器 */}
+              <div className="h-[400px] md:h-[600px] rounded border relative">
+                {loading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 z-10">
+                    <div className="text-center">
+                      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
+                      <p className="mt-2 text-gray-600">處理數據中...</p>
+                    </div>
+                  </div>
+                )}
+                <Map data={data || []} mapType={mapView} />
+              </div>
+              
+              {/* 數據狀態提示 */}
+              <div className="mt-2 text-sm text-gray-500">
+                {loading ? '載入中...' : `顯示 ${data.length} 個數據點`}
+                {data.length === 0 && !loading ? ' (沒有符合條件的數據)' : ''}
               </div>
             </div>
 
@@ -86,7 +280,7 @@ export default function RealEstateMap() {
               {/* 統計資訊 */}
               <div className="p-4 border rounded">
                 <h3 className="text-lg font-medium mb-4">統計資訊</h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div>
                     <span className="text-gray-600">平均誤差:</span>
                     <span className="ml-2 font-bold">{stats.avgError}%</span>
@@ -94,6 +288,18 @@ export default function RealEstateMap() {
                   <div>
                     <span className="text-gray-600">資料點數:</span>
                     <span className="ml-2 font-bold">{stats.count}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">最低價格:</span>
+                    <span className="ml-2 font-bold">{stats.minPrice} 元</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">最高價格:</span>
+                    <span className="ml-2 font-bold">{stats.maxPrice} 元</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">平均價格:</span>
+                    <span className="ml-2 font-bold">{stats.avgPrice} 元</span>
                   </div>
                 </div>
               </div>
@@ -119,6 +325,18 @@ export default function RealEstateMap() {
                     <span>誤差 大於 15%</span>
                   </div>
                 </div>
+              </div>
+
+              {/* 操作說明 */}
+              <div className="p-4 border rounded">
+                <h3 className="text-lg font-medium mb-4">操作說明</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>• 點擊標記點查看詳細資訊</li>
+                  <li>• 滾輪縮放地圖</li>
+                  <li>• 拖曳移動地圖位置</li>
+                  <li>• 使用篩選條件精確查詢</li>
+                  <li>• 拖動滑塊兩端調整數值範圍</li>
+                </ul>
               </div>
             </div>
           </div>

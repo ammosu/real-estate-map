@@ -4,9 +4,23 @@ import L from 'leaflet';
 import 'leaflet.markercluster';
 import 'leaflet/dist/leaflet.css';
 
-delete L.Icon.Default.prototype._getIconUrl;
+// 修正 Leaflet 的圖標問題
+if (typeof window !== 'undefined') {
+  delete L.Icon.Default.prototype._getIconUrl;
+  
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+}
 
 const createCustomIcon = (error) => {
+  // 防禦性編程
+  if (error === undefined || error === null) {
+    error = 0;
+  }
+  
   let color;
   if (error <= 5) color = '#10B981';
   else if (error <= 10) color = '#FBBF24';
@@ -37,136 +51,259 @@ const createCustomIcon = (error) => {
   });
 };
 
-export default function Map({ data }) {
+export default function Map({ data = [], mapType = 'map' }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerClusterRef = useRef(null);
-  const currentViewRef = useRef(null); // 保存當前視角的ref
+  const currentViewRef = useRef(null);
+
+  // 存儲當前圖層的引用
+  const tileLayerRef = useRef(null);
 
   useEffect(() => {
+    // 只在客戶端渲染
+    if (typeof window === 'undefined') return;
+    
+    // 確保 mapRef 存在
+    if (!mapRef.current) return;
+    
+    // 初始化地圖
     if (!mapInstanceRef.current) {
-      // 初始化地圖
-      mapInstanceRef.current = L.map(mapRef.current).setView([23.5, 121], 7);
+      try {
+        // 初始化地圖，添加 maxZoom 設置
+        mapInstanceRef.current = L.map(mapRef.current, {
+          maxZoom: 18,
+          minZoom: 5
+        }).setView([23.5, 121], 7);
+        
+        // 初始圖層將在 mapType useEffect 中添加
+
+        // 初始化標記群集
+        markerClusterRef.current = L.markerClusterGroup({
+          iconCreateFunction: function(cluster) {
+            const childMarkers = cluster.getAllChildMarkers();
+            // 確保有標記
+            if (!childMarkers || !childMarkers.length) {
+              return L.divIcon({ 
+                html: '<div>0</div>', 
+                className: 'custom-cluster-icon',
+                iconSize: [30, 30]
+              });
+            }
+            
+            // 計算平均誤差
+            let totalError = 0;
+            let validMarkers = 0;
+            
+            childMarkers.forEach(marker => {
+              if (marker.options && typeof marker.options.error === 'number') {
+                totalError += marker.options.error;
+                validMarkers++;
+              }
+            });
+            
+            const avgError = validMarkers > 0 ? totalError / validMarkers : 0;
+
+            let color;
+            if (avgError <= 5) color = '#10B981';
+            else if (avgError <= 10) color = '#FBBF24';
+            else if (avgError <= 15) color = '#F97316';
+            else color = '#EF4444';
+
+            return L.divIcon({
+              html: `
+                <div style="
+                  background-color: ${color};
+                  width: 50px;
+                  height: 50px;
+                  border-radius: 50%;
+                  border: 2px solid white;
+                  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-weight: bold;
+                  font-size: 12px;
+                  line-height: 1.2;
+                ">
+                  <span>${avgError.toFixed(1)}%</span>
+                  <span style="font-size: 10px;">(${cluster.getChildCount()})</span>
+                </div>
+              `,
+              className: 'custom-cluster-icon',
+              iconSize: [50, 50],
+              iconAnchor: [25, 25]
+            });
+          },
+          maxClusterRadius: 80,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: true,
+          zoomToBoundsOnClick: true
+        }).addTo(mapInstanceRef.current);
+
+        // 監聽地圖移動和縮放事件
+        mapInstanceRef.current.on('moveend', () => {
+          if (mapInstanceRef.current) {
+            currentViewRef.current = {
+              center: mapInstanceRef.current.getCenter(),
+              zoom: mapInstanceRef.current.getZoom()
+            };
+          }
+        });
+      } catch (error) {
+        console.error("地圖初始化錯誤:", error);
+      }
+    }
+
+    // 更新標記
+    if (Array.isArray(data) && data.length > 0) {
+      try {
+        updateMarkers(data);
+      } catch (error) {
+        console.error("更新標記時出錯:", error);
+      }
+    } else if (markerClusterRef.current) {
+      // 清空標記
+      markerClusterRef.current.clearLayers();
+    }
+
+    // 清理函數
+    return () => {
+      // 不需要在每次更新時銷毀地圖
+    };
+  }, [data, mapType]);  // 在 data 或 mapType 變化時更新
+
+  // 處理地圖類型變更
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    
+    try {
+      // 如果已有圖層，先移除
+      if (tileLayerRef.current) {
+        mapInstanceRef.current.removeLayer(tileLayerRef.current);
+      }
       
-      // 添加圖層
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(mapInstanceRef.current);
-
-      // 初始化標記群集
-      markerClusterRef.current = L.markerClusterGroup({
-        iconCreateFunction: function(cluster) {
-          const childMarkers = cluster.getAllChildMarkers();
-          const avgError = childMarkers.reduce((sum, marker) => 
-            sum + marker.options.error, 0) / childMarkers.length;
-
-          let color;
-          if (avgError <= 5) color = '#10B981';
-          else if (avgError <= 10) color = '#FBBF24';
-          else if (avgError <= 15) color = '#F97316';
-          else color = '#EF4444';
-
-          return L.divIcon({
-            html: `
-              <div style="
-                background-color: ${color};
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                border: 2px solid white;
-                box-shadow: 0 0 4px rgba(0,0,0,0.3);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: bold;
-                font-size: 12px;
-                line-height: 1.2;
-              ">
-                <span>${avgError.toFixed(1)}%</span>
-                <span style="font-size: 10px;">(${cluster.getChildCount()})</span>
-              </div>
-            `,
-            className: 'custom-cluster-icon',
-            iconSize: [50, 50],
-            iconAnchor: [25, 25]
-          });
-        },
-        maxClusterRadius: 80,
-        spiderfyOnMaxZoom: true,
-        showCoverageOnHover: true,
-        zoomToBoundsOnClick: true
-      }).addTo(mapInstanceRef.current);
-
-      // 監聽地圖移動和縮放事件
-      mapInstanceRef.current.on('moveend', () => {
-        if (mapInstanceRef.current) {
-          currentViewRef.current = {
-            center: mapInstanceRef.current.getCenter(),
-            zoom: mapInstanceRef.current.getZoom()
-          };
-        }
-      });
+      // 根據 mapType 添加不同的圖層
+      if (mapType === 'satellite') {
+        // 衛星圖層
+        tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }).addTo(mapInstanceRef.current);
+      } else {
+        // 標準地圖
+        tileLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(mapInstanceRef.current);
+      }
+    } catch (error) {
+      console.error("更新地圖類型時出錯:", error);
     }
+  }, [mapType]);
 
-    // 更新標記，並保持當前視角
-    if (data && data.length > 0) {
-      updateMarkers(data);
-    }
-
+  // 獨立的清理函數，確保在組件卸載時徹底清理地圖
+  useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+        try {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+          markerClusterRef.current = null;
+        } catch (error) {
+          console.error("清理地圖時出錯:", error);
+        }
       }
     };
-  }, [data]);
+  }, []);  // 空依賴數組，只在卸載時執行
 
-  // 更新標記
+  // 更新標記的安全實現
   const updateMarkers = (data) => {
-    if (!markerClusterRef.current) return;
+    if (!markerClusterRef.current || !Array.isArray(data)) {
+      console.error("無法更新標記: markerCluster 不存在或數據不是數組");
+      return;
+    }
 
-    // 保存當前視角
-    const currentView = currentViewRef.current || {
-      center: [23.5, 121],
-      zoom: 7
-    };
+    console.log("開始更新標記，數據點數量:", data.length);
 
-    markerClusterRef.current.clearLayers();
+    try {
+      // 保存當前視角
+      const currentView = currentViewRef.current || {
+        center: [23.5, 121],
+        zoom: 7
+      };
 
-    data.forEach(point => {
-      const marker = L.marker([point.lat, point.lng], {
-        icon: createCustomIcon(point.error),
-        error: point.error
-      });
+      markerClusterRef.current.clearLayers();
+      let addedMarkers = 0;
 
-      const formattedDate = new Date(point.date).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      data.forEach(point => {
+        // 確保點位數據有效
+        if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number') {
+          return;
+        }
+        
+        // 確保誤差值有效
+        const error = typeof point.error === 'number' ? point.error : 0;
+        
+        const marker = L.marker([point.lat, point.lng], {
+          icon: createCustomIcon(error),
+          error: error
+        });
 
-      marker.bindPopup(`
-        <div class="p-3">
-          <h3 class="font-bold text-lg mb-2">房產資訊</h3>
-          <div class="space-y-1">
-            <p><span class="font-medium">實際價格:</span> ${point.actualPrice.toLocaleString('zh-TW')} 元</p>
-            <p><span class="font-medium">估計價格:</span> ${point.estimatedPrice.toLocaleString('zh-TW')} 元</p>
-            <p><span class="font-medium">誤差:</span> <strong>${point.error.toFixed(1)}%</strong></p>
-            <p><span class="font-medium">交易日期:</span> ${formattedDate}</p>
+        // 格式化日期，用安全的方式
+        let formattedDate = '未知日期';
+        try {
+          if (point.date) {
+            formattedDate = new Date(point.date).toLocaleDateString('zh-TW', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          }
+        } catch (e) {
+          console.warn("日期格式化錯誤:", e);
+        }
+
+        // 處理價格格式化
+        const actualPrice = typeof point.actualPrice === 'number' ? 
+          point.actualPrice.toLocaleString('zh-TW') : '未知';
+        const estimatedPrice = typeof point.estimatedPrice === 'number' ? 
+          point.estimatedPrice.toLocaleString('zh-TW') : '未知';
+
+        marker.bindPopup(`
+          <div class="p-3">
+            <h3 class="font-bold text-lg mb-2">房產資訊</h3>
+            <div class="space-y-1">
+              <p><span class="font-medium">實際價格:</span> ${actualPrice} 元</p>
+              <p><span class="font-medium">估計價格:</span> ${estimatedPrice} 元</p>
+              <p><span class="font-medium">誤差:</span> <strong>${error.toFixed(1)}%</strong></p>
+              <p><span class="font-medium">交易日期:</span> ${formattedDate}</p>
+            </div>
           </div>
-        </div>
-      `);
+        `);
 
-      markerClusterRef.current.addLayer(marker);
-    });
-
-    // 恢復先前的視角
-    if (mapInstanceRef.current && currentView) {
-      mapInstanceRef.current.setView(currentView.center, currentView.zoom, {
-        animate: false
+        markerClusterRef.current.addLayer(marker);
+        addedMarkers++;
       });
+
+      // 恢復先前的視角，但添加錯誤處理
+      if (mapInstanceRef.current && currentView) {
+        try {
+          mapInstanceRef.current.setView(currentView.center, currentView.zoom, {
+            animate: false
+          });
+        } catch (e) {
+          console.warn("恢復地圖視角時出錯:", e);
+          // 嘗試使用默認視角
+          mapInstanceRef.current.setView([23.5, 121], 7, {
+            animate: false
+          });
+        }
+      }
+      
+      console.log("成功添加標記數量:", addedMarkers);
+    } catch (error) {
+      console.error("更新標記時出現未預期的錯誤:", error);
     }
   };
 
