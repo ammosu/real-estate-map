@@ -130,14 +130,26 @@ export default function RealEstateMap() {
       
       // 價格範圍過濾
       if (Array.isArray(priceRange) && priceRange.length === 2) {
-        if (item.actualPrice < priceRange[0] || item.actualPrice > priceRange[1]) {
+        // 檢查最小值
+        if (item.actualPrice < priceRange[0]) {
+          return false;
+        }
+        
+        // 檢查最大值 (如果最大值等於滑塊的最大值，視為不限上限)
+        if (priceRange[1] < 100000000 && item.actualPrice > priceRange[1]) {
           return false;
         }
       }
       
       // 誤差範圍過濾
       if (Array.isArray(errorRange) && errorRange.length === 2) {
-        if (item.error < errorRange[0] || item.error > errorRange[1]) {
+        // 檢查最小值
+        if (item.error < errorRange[0]) {
+          return false;
+        }
+        
+        // 檢查最大值 (如果最大值等於滑塊的最大值，視為不限上限)
+        if (errorRange[1] < 20 && item.error > errorRange[1]) {
           return false;
         }
       }
@@ -291,6 +303,7 @@ export default function RealEstateMap() {
                 step={1000000}
                 formatValue={formatPrice}
                 unit=" 元"
+                allowNoLimit={true}
               />
             </div>
 
@@ -304,6 +317,7 @@ export default function RealEstateMap() {
                 max={20}
                 step={1}
                 unit="%"
+                allowNoLimit={true}
               />
             </div>
           </div>
