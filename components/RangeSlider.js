@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * 防抖函數 - 延遲執行函數直到停止調用一段時間後
+ * 防抖函數 - 延遲執行函數直到停止呼叫一段時間後
  * @param {Function} func 要執行的函數
  * @param {number} wait 等待時間（毫秒）
  * @returns {Function} 防抖處理後的函數
@@ -17,10 +17,10 @@ function debounce(func, wait) {
 }
 
 /**
- * 雙向範圍滑塊組件
- * @param {Object} props 組件屬性
- * @param {Array} props.value 當前值 [最小值, 最大值]
- * @param {Function} props.onChange 值變更時的回調
+ * 雙向範圍滑塊元件
+ * @param {Object} props 元件屬性
+ * @param {Array} props.value 目前值 [最小值, 最大值]
+ * @param {Function} props.onChange 值變更時的回呼
  * @param {number} props.min 滑塊最小可選值
  * @param {number} props.max 滑塊最大可選值
  * @param {number} props.step 滑塊步進值

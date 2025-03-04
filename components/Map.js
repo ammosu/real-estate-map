@@ -220,11 +220,11 @@ export default function Map({ data = [], mapType = 'map' }) {
   // 更新標記的安全實現 - 使用批量處理和 requestAnimationFrame 優化
   const updateMarkers = (data) => {
     if (!markerClusterRef.current || !Array.isArray(data)) {
-      console.error("無法更新標記: markerCluster 不存在或數據不是數組");
+      console.error("無法更新標記: markerCluster 不存在或資料不是陣列");
       return;
     }
 
-    console.log("開始更新標記，數據點數量:", data.length);
+    console.log("開始更新標記，資料點數量:", data.length);
 
     try {
       // 保存當前視角
@@ -238,7 +238,7 @@ export default function Map({ data = [], mapType = 'map' }) {
       
       // 如果數據為空，直接返回
       if (data.length === 0) {
-        console.log("沒有數據點需要添加");
+        console.log("沒有資料點需要添加");
         return;
       }
       
@@ -249,7 +249,7 @@ export default function Map({ data = [], mapType = 'map' }) {
       
       // 創建標記的函數
       const createMarker = (point) => {
-        // 確保點位數據有效
+        // 確保點位資料有效
         if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number') {
           return null;
         }

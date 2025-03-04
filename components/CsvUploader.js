@@ -22,13 +22,13 @@ export default function CsvUploader({ onDataLoaded, className }) {
     const missingFields = requiredFields.filter(field => !headers.includes(field));
 
     if (missingFields.length > 0) {
-      return { 
-        valid: false, 
-        message: `缺少必要欄位: ${missingFields.join(', ')}。必要欄位包括: ${requiredFields.join(', ')}` 
+      return {
+        valid: false,
+        message: `缺少必要欄位: ${missingFields.join(', ')}。必要欄位包括: ${requiredFields.join(', ')}`
       };
     }
 
-    // 檢查數據有效性
+    // 檢查資料有效性
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       
@@ -70,7 +70,7 @@ export default function CsvUploader({ onDataLoaded, className }) {
           return;
         }
 
-        // 處理數據，確保所有必要欄位都是正確的數據類型
+        // 處理資料，確保所有必要欄位都是正確的資料類型
         const processedData = data.map(row => ({
           lat: parseFloat(row.lat),
           lng: parseFloat(row.lng),
@@ -81,7 +81,7 @@ export default function CsvUploader({ onDataLoaded, className }) {
           date: row.date ? new Date(row.date) : new Date()
         }));
 
-        // 將處理後的數據傳遞給父組件
+        // 將處理後的資料傳遞給父元件
         onDataLoaded(processedData);
         setIsLoading(false);
       } catch (error) {
@@ -242,11 +242,11 @@ export default function CsvUploader({ onDataLoaded, className }) {
         <div className="bg-gray-50 p-3 rounded text-xs text-gray-600">
           <p className="mb-1">CSV 檔案應包含以下欄位:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>lat</strong> - 緯度 (必要, 數字)</li>
-            <li><strong>lng</strong> - 經度 (必要, 數字)</li>
-            <li><strong>actualPrice</strong> - 實際價格 (必要, 數字)</li>
-            <li><strong>estimatedPrice</strong> - 估計價格 (選填, 數字)</li>
-            <li><strong>error</strong> - 誤差百分比 (選填, 數字)</li>
+            <li><strong>lat</strong> - 緯度 (必要, 數值)</li>
+            <li><strong>lng</strong> - 經度 (必要, 數值)</li>
+            <li><strong>actualPrice</strong> - 實際價格 (必要, 數值)</li>
+            <li><strong>estimatedPrice</strong> - 估計價格 (選填, 數值)</li>
+            <li><strong>error</strong> - 誤差百分比 (選填, 數值)</li>
             <li><strong>date</strong> - 日期 (選填, 日期格式)</li>
           </ul>
           <p className="mt-2">範例: lat,lng,actualPrice,estimatedPrice,error,date</p>
