@@ -217,7 +217,7 @@ export default function Map({ data = [], mapType = 'map' }) {
     };
   }, []);  // 空依賴數組，只在卸載時執行
 
-  // 更新標記的安全實現
+  // 更新標記的安全實現 - 使用批量處理和 requestAnimationFrame 優化
   const updateMarkers = (data) => {
     if (!markerClusterRef.current || !Array.isArray(data)) {
       console.error("無法更新標記: markerCluster 不存在或數據不是數組");
@@ -233,13 +233,25 @@ export default function Map({ data = [], mapType = 'map' }) {
         zoom: 7
       };
 
+      // 清除現有標記
       markerClusterRef.current.clearLayers();
+      
+      // 如果數據為空，直接返回
+      if (data.length === 0) {
+        console.log("沒有數據點需要添加");
+        return;
+      }
+      
+      // 批量處理標記，每批次處理的標記數量
+      const BATCH_SIZE = 100;
+      let processedCount = 0;
       let addedMarkers = 0;
-
-      data.forEach(point => {
+      
+      // 創建標記的函數
+      const createMarker = (point) => {
         // 確保點位數據有效
         if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number') {
-          return;
+          return null;
         }
         
         // 確保誤差值有效
@@ -250,58 +262,93 @@ export default function Map({ data = [], mapType = 'map' }) {
           error: error
         });
 
-        // 格式化日期，用安全的方式
-        let formattedDate = '未知日期';
-        try {
-          if (point.date) {
-            formattedDate = new Date(point.date).toLocaleDateString('zh-TW', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            });
+        // 延遲綁定彈出窗口，只有在用戶點擊標記時才創建內容
+        marker.bindPopup(() => {
+          // 格式化日期，用安全的方式
+          let formattedDate = '未知日期';
+          try {
+            if (point.date) {
+              formattedDate = new Date(point.date).toLocaleDateString('zh-TW', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+            }
+          } catch (e) {
+            console.warn("日期格式化錯誤:", e);
           }
-        } catch (e) {
-          console.warn("日期格式化錯誤:", e);
-        }
 
-        // 處理價格格式化
-        const actualPrice = typeof point.actualPrice === 'number' ? 
-          point.actualPrice.toLocaleString('zh-TW') : '未知';
-        const estimatedPrice = typeof point.estimatedPrice === 'number' ? 
-          point.estimatedPrice.toLocaleString('zh-TW') : '未知';
+          // 處理價格格式化
+          const actualPrice = typeof point.actualPrice === 'number' ?
+            point.actualPrice.toLocaleString('zh-TW') : '未知';
+          const estimatedPrice = typeof point.estimatedPrice === 'number' ?
+            point.estimatedPrice.toLocaleString('zh-TW') : '未知';
 
-        marker.bindPopup(`
-          <div class="p-3">
-            <h3 class="font-bold text-lg mb-2">房產資訊</h3>
-            <div class="space-y-1">
-              <p><span class="font-medium">實際價格:</span> ${actualPrice} 元</p>
-              <p><span class="font-medium">估計價格:</span> ${estimatedPrice} 元</p>
-              <p><span class="font-medium">誤差:</span> <strong>${error.toFixed(1)}%</strong></p>
-              <p><span class="font-medium">交易日期:</span> ${formattedDate}</p>
+          return `
+            <div class="p-3">
+              <h3 class="font-bold text-lg mb-2">房產資訊</h3>
+              <div class="space-y-1">
+                <p><span class="font-medium">實際價格:</span> ${actualPrice} 元</p>
+                <p><span class="font-medium">估計價格:</span> ${estimatedPrice} 元</p>
+                <p><span class="font-medium">誤差:</span> <strong>${error.toFixed(1)}%</strong></p>
+                <p><span class="font-medium">交易日期:</span> ${formattedDate}</p>
+              </div>
             </div>
-          </div>
-        `);
+          `;
+        });
 
-        markerClusterRef.current.addLayer(marker);
-        addedMarkers++;
-      });
-
-      // 恢復先前的視角，但添加錯誤處理
-      if (mapInstanceRef.current && currentView) {
-        try {
-          mapInstanceRef.current.setView(currentView.center, currentView.zoom, {
-            animate: false
-          });
-        } catch (e) {
-          console.warn("恢復地圖視角時出錯:", e);
-          // 嘗試使用默認視角
-          mapInstanceRef.current.setView([23.5, 121], 7, {
-            animate: false
-          });
-        }
-      }
+        return marker;
+      };
       
-      console.log("成功添加標記數量:", addedMarkers);
+      // 批量處理函數
+      const processBatch = () => {
+        if (processedCount >= data.length) {
+          // 所有批次處理完成，恢復地圖視角
+          if (mapInstanceRef.current && currentView) {
+            try {
+              mapInstanceRef.current.setView(currentView.center, currentView.zoom, {
+                animate: false
+              });
+            } catch (e) {
+              console.warn("恢復地圖視角時出錯:", e);
+              // 嘗試使用默認視角
+              mapInstanceRef.current.setView([23.5, 121], 7, {
+                animate: false
+              });
+            }
+          }
+          
+          console.log("成功添加標記數量:", addedMarkers);
+          return;
+        }
+        
+        // 處理當前批次
+        const endIdx = Math.min(processedCount + BATCH_SIZE, data.length);
+        const tempMarkers = [];
+        
+        for (let i = processedCount; i < endIdx; i++) {
+          const marker = createMarker(data[i]);
+          if (marker) {
+            tempMarkers.push(marker);
+            addedMarkers++;
+          }
+        }
+        
+        // 一次性添加所有標記到圖層
+        if (tempMarkers.length > 0) {
+          markerClusterRef.current.addLayers(tempMarkers);
+        }
+        
+        // 更新處理計數
+        processedCount = endIdx;
+        
+        // 使用 requestAnimationFrame 安排下一批處理，給 UI 線程喘息的機會
+        requestAnimationFrame(processBatch);
+      };
+      
+      // 開始批量處理
+      processBatch();
+      
     } catch (error) {
       console.error("更新標記時出現未預期的錯誤:", error);
     }

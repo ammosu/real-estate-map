@@ -1,5 +1,20 @@
 // components/RangeSlider.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+/**
+ * 防抖函數 - 延遲執行函數直到停止調用一段時間後
+ * @param {Function} func 要執行的函數
+ * @param {number} wait 等待時間（毫秒）
+ * @returns {Function} 防抖處理後的函數
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
 
 /**
  * 雙向範圍滑塊組件
@@ -13,11 +28,11 @@ import React, { useState, useEffect } from 'react';
  * @param {string} props.unit 值的單位
  * @param {boolean} props.allowNoLimit 是否允許無上限選項
  */
-const RangeSlider = ({ 
-  value, 
-  onChange, 
-  min, 
-  max, 
+const RangeSlider = ({
+  value,
+  onChange,
+  min,
+  max,
   step,
   formatValue = (val) => val.toString(),
   unit = '',
@@ -27,6 +42,23 @@ const RangeSlider = ({
   const [minValue, maxValue] = value;
   const [noUpperLimit, setNoUpperLimit] = useState(false);
   
+  // 內部狀態用於即時更新 UI
+  const [localMinValue, setLocalMinValue] = useState(minValue);
+  const [localMaxValue, setLocalMaxValue] = useState(maxValue);
+  
+  // 使用 useRef 存儲防抖函數，避免重新創建
+  const debouncedOnChange = useRef(
+    debounce((newMin, newMax) => {
+      onChange([newMin, newMax]);
+    }, 300) // 300ms 的防抖延遲
+  ).current;
+  
+  // 當外部 value 變化時更新內部狀態
+  useEffect(() => {
+    setLocalMinValue(minValue);
+    setLocalMaxValue(maxValue);
+  }, [minValue, maxValue]);
+  
   // 當啟用無上限時，將最大值設為最大可能值
   useEffect(() => {
     if (noUpperLimit) {
@@ -34,24 +66,43 @@ const RangeSlider = ({
     }
   }, [noUpperLimit]);
   
+  // 處理最小值變化
+  const handleMinChange = useCallback((e) => {
+    const newMin = Number(e.target.value);
+    if (newMin < localMaxValue) {
+      setLocalMinValue(newMin);
+      debouncedOnChange(newMin, localMaxValue);
+    }
+  }, [localMaxValue, debouncedOnChange]);
+  
+  // 處理最大值變化
+  const handleMaxChange = useCallback((e) => {
+    if (noUpperLimit) return;
+    const newMax = Number(e.target.value);
+    if (newMax > localMinValue) {
+      setLocalMaxValue(newMax);
+      debouncedOnChange(localMinValue, newMax);
+    }
+  }, [localMinValue, noUpperLimit, debouncedOnChange]);
+  
   // 簡單的範圍選擇器實現 - 使用兩個獨立的輸入控件
   return (
     <div className="mb-6">
       <div className="flex justify-between mb-2 px-2">
         <span className="text-sm font-medium">
-          {formatValue(minValue)}{unit}
+          {formatValue(localMinValue)}{unit}
         </span>
         <span className="text-sm font-medium">
-          {noUpperLimit ? "不限" : `${formatValue(maxValue)}${unit}`}
+          {noUpperLimit ? "不限" : `${formatValue(localMaxValue)}${unit}`}
         </span>
       </div>
       
       {allowNoLimit && (
         <div className="flex justify-end mb-2">
           <label className="inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={noUpperLimit} 
+            <input
+              type="checkbox"
+              checked={noUpperLimit}
               onChange={(e) => setNoUpperLimit(e.target.checked)}
               className="sr-only peer"
             />
@@ -70,13 +121,8 @@ const RangeSlider = ({
             min={min}
             max={max}
             step={step}
-            value={minValue}
-            onChange={(e) => {
-              const newMin = Number(e.target.value);
-              if (newMin < maxValue) {
-                onChange([newMin, maxValue]);
-              }
-            }}
+            value={localMinValue}
+            onChange={handleMinChange}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
           />
         </div>
@@ -89,14 +135,8 @@ const RangeSlider = ({
             min={min}
             max={max}
             step={step}
-            value={maxValue}
-            onChange={(e) => {
-              if (noUpperLimit) return;
-              const newMax = Number(e.target.value);
-              if (newMax > minValue) {
-                onChange([minValue, newMax]);
-              }
-            }}
+            value={localMaxValue}
+            onChange={handleMaxChange}
             disabled={noUpperLimit}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
           />

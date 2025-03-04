@@ -66,22 +66,25 @@ export default function RealEstateMap() {
     setLoading(true);
     console.log("開始過濾數據");
     
-    // 使用 window.setTimeout 確保清理能正常工作
+    // 使用 window.setTimeout 確保清理能正常工作，並增加延遲時間
     const timerId = window.setTimeout(() => {
       // 防禦性程式設計
       try {
-        const filteredData = filterData(sourceData) || [];
-        console.log("過濾後數據:", filteredData.length, "個點");
-        setData(filteredData);
+        // 使用 requestAnimationFrame 確保在下一幀渲染前執行過濾
+        requestAnimationFrame(() => {
+          const filteredData = filterData(sourceData) || [];
+          console.log("過濾後數據:", filteredData.length, "個點");
+          setData(filteredData);
+          // 無論如何，都將加載狀態設為 false
+          setLoading(false);
+        });
       } catch (error) {
         console.error("數據處理錯誤:", error);
         // 發生錯誤時設置空數組
         setData([]);
+        setLoading(false);
       }
-      
-      // 無論如何，都將加載狀態設為 false
-      setLoading(false);
-    }, 500);
+    }, 800); // 增加延遲時間，給瀏覽器更多時間處理 UI 更新
     
     // 清理函數
     return () => {
