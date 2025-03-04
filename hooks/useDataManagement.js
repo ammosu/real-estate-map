@@ -119,7 +119,7 @@ export default function useDataManagement(timeRange, priceRange, errorRange) {
         }
         
         // 檢查最大值 (如果最大值接近滑塊的最大值，視為不限上限)
-        if (priceRange[1] < 90000000 && item.actualPrice > priceRange[1]) {
+        if (priceRange[1] < 1800000 && item.actualPrice > priceRange[1]) {
           return false;
         }
       }

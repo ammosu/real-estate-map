@@ -29,7 +29,7 @@ const generateError = () => {
 
 // 生成隨機價格
 const generatePrice = () => {
-  return Math.floor(15000000 + nextRandom() * 35000000); // 1500萬到5000萬之間
+  return Math.floor(150000 + nextRandom() * 350000); // 15萬到50萬之間
 };
   
   // 生成隨機日期

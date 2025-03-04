@@ -105,14 +105,13 @@ export default function FilterPanel({
               value={priceRange}
               onChange={setPriceRange}
               min={0}
-              max={100000000}
-              step={1000000}
+              max={2000000}
+              step={100000}
               formatValue={formatPrice}
               parseValue={(val) => Number(val.replace(/,/g, ''))}
               unit=" 元"
               allowNoLimit={true}
-              allowManualInput={true}
-              inputType="text"
+              allowManualInput={false}
             />
           </div>
 
@@ -132,8 +131,7 @@ export default function FilterPanel({
               step={1}
               unit="%"
               allowNoLimit={true}
-              allowManualInput={true}
-              inputType="text"
+              allowManualInput={false}
             />
           </div>
         </div>

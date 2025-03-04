@@ -21,7 +21,7 @@ const P5Background = dynamic(() => import('./P5Background'), { ssr: false });
 export default function RealEstateMap() {
   // 使用自定義 hooks
   const { currentTime, timeRange, setTimeRange, formatDate } = useTimeManagement();
-  const [priceRange, setPriceRange] = useState([0, 50000000]);
+  const [priceRange, setPriceRange] = useState([0, 2000000]);
   const [errorRange, setErrorRange] = useState([0, 20]);
   const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
