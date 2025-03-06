@@ -45,7 +45,7 @@ export default function FilterPanel({
                   type="date"
                   className="w-full p-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   value={formatDate(timeRange[0])}
-                  min="2024-01-01"
+                  min="2012-07-01"
                   max={formatDate(new Date().getTime())}
                   onChange={(e) => {
                     try {

@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 export default function useTimeManagement() {
   const [currentTime, setCurrentTime] = useState('');
   const [timeRange, setTimeRange] = useState(() => {
-    // 設定最小日期為 2024/01/01
-    const minDate = new Date('2024-01-01').getTime();
+    // 設定最小日期為 2012/07/01
+    const minDate = new Date('2012-07-01').getTime();
     // 預設結束日期為當前時間
     const endDate = new Date();
-    // 預設開始日期為最近6個月，但不早於 2024/01/01
+    // 預設開始日期為最近6個月，但不早於 2012/07/01
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(endDate.getMonth() - 6);
     const startDate = Math.max(sixMonthsAgo.getTime(), minDate);
