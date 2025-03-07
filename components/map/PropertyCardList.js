@@ -1,5 +1,5 @@
 // components/map/PropertyCardList.js
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropertyCard from './PropertyCard';
 
 // 按月份分組並排序的函數
@@ -65,6 +65,24 @@ export default function PropertyCardList({ properties, onClose }) {
     return groupPropertiesByMonth(properties);
   }, [properties]);
   
+  // 追蹤每個月份的展開/收合狀態，預設第一個月份為展開狀態
+  const [expandedMonths, setExpandedMonths] = useState(() => {
+    const initialState = {};
+    const monthKeys = Object.keys(groupedProperties);
+    if (monthKeys.length > 0) {
+      initialState[monthKeys[0]] = true;
+    }
+    return initialState;
+  });
+  
+  // 切換月份的展開/收合狀態
+  const toggleMonth = (monthKey) => {
+    setExpandedMonths(prev => ({
+      ...prev,
+      [monthKey]: !prev[monthKey]
+    }));
+  };
+  
   // 如果沒有屬性，顯示空狀態
   if (!properties || properties.length === 0) {
     return null;
@@ -98,8 +116,24 @@ export default function PropertyCardList({ properties, onClose }) {
       {/* 卡片列表 */}
       {Object.entries(groupedProperties).map(([monthKey, props]) => (
         <div key={monthKey} className="space-y-4">
-          <div className="bg-yellow-100 p-4 rounded-lg flex justify-between items-center">
-            <h3 className="font-bold">{monthKey}</h3>
+          <div 
+            className="bg-yellow-100 p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-yellow-200 transition-colors"
+            onClick={() => toggleMonth(monthKey)}
+          >
+            <div className="flex items-center">
+              <div className="mr-2 text-gray-600">
+                {expandedMonths[monthKey] ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+              <h3 className="font-bold">{monthKey}</h3>
+            </div>
             <div>
               <span className="bg-yellow-300 px-3 py-1 rounded-full font-bold">
                 {Math.round(props[0].actualPrice).toLocaleString('zh-TW')} 元/坪
@@ -108,11 +142,13 @@ export default function PropertyCardList({ properties, onClose }) {
             </div>
           </div>
           
-          <div className="space-y-4">
-            {props.map((property, index) => (
-              <PropertyCard key={index} property={property} />
-            ))}
-          </div>
+          {expandedMonths[monthKey] && (
+            <div className="space-y-4 animate-fadeIn">
+              {props.map((property, index) => (
+                <PropertyCard key={index} property={property} />
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </div>
