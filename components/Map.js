@@ -63,7 +63,7 @@ const createCustomIcon = (error) => {
   });
 };
 
-export default function Map({ data = [], mapType = 'map' }) {
+export default function Map({ data = [], mapType = 'map', onMarkerClick, onClusterClick }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerClusterRef = useRef(null);
@@ -166,6 +166,21 @@ export default function Map({ data = [], mapType = 'map' }) {
           zoomToBoundsOnClick: true
         }).addTo(mapInstanceRef.current);
 
+        // 添加聚合點點擊事件
+        if (onClusterClick) {
+          markerClusterRef.current.on('clusterclick', (e) => {
+            // 阻止默認的縮放行為
+            e.layer.zoomToBounds = function() {}; // 覆蓋原方法
+            
+            // 獲取所有子標記的原始數據點
+            const childMarkers = e.layer.getAllChildMarkers();
+            const points = childMarkers.map(marker => marker.options.originalPoint).filter(Boolean);
+            
+            // 調用回調函數
+            onClusterClick(points);
+          });
+        }
+
         // 監聽地圖移動和縮放事件
         mapInstanceRef.current.on('moveend', () => {
           if (mapInstanceRef.current) {
@@ -196,7 +211,7 @@ export default function Map({ data = [], mapType = 'map' }) {
     return () => {
       // 不需要在每次更新時銷毀地圖
     };
-  }, [data, mapType]);  // 在 data 或 mapType 變化時更新
+  }, [data, mapType, onMarkerClick, onClusterClick]);  // 在 data, mapType 或點擊處理器變化時更新
 
   // 處理地圖類型變更
   useEffect(() => {
@@ -282,8 +297,16 @@ export default function Map({ data = [], mapType = 'map' }) {
         
         const marker = L.marker([point.lat, point.lng], {
           icon: createCustomIcon(error),
-          error: error
+          error: error,
+          originalPoint: point // 保存原始數據點以便在點擊事件中使用
         });
+
+        // 添加點擊事件處理器
+        if (onMarkerClick) {
+          marker.on('click', () => {
+            onMarkerClick([point]);
+          });
+        }
 
         // 延遲綁定彈出窗口，只有在用戶點擊標記時才創建內容
         marker.bindPopup(() => {
@@ -303,16 +326,16 @@ export default function Map({ data = [], mapType = 'map' }) {
 
           // 處理價格格式化
           const actualPrice = typeof point.actualPrice === 'number' ?
-            point.actualPrice.toLocaleString('zh-TW') : '未知';
+            Math.round(point.actualPrice).toLocaleString('zh-TW') : '未知';
           const estimatedPrice = typeof point.estimatedPrice === 'number' ?
-            point.estimatedPrice.toLocaleString('zh-TW') : '未知';
+            Math.round(point.estimatedPrice).toLocaleString('zh-TW') : '未知';
 
           return `
             <div class="p-3">
               <h3 class="font-bold text-lg mb-2">房產資訊</h3>
               <div class="space-y-1">
-                <p><span class="font-medium">實際價格:</span> ${actualPrice} 元</p>
-                <p><span class="font-medium">估計價格:</span> ${estimatedPrice} 元</p>
+                <p><span class="font-medium">實際價格:</span> ${actualPrice} 元/坪</p>
+                <p><span class="font-medium">估計價格:</span> ${estimatedPrice} 元/坪</p>
                 <p><span class="font-medium">誤差:</span> <strong>${error.toFixed(1)}%</strong></p>
                 <p><span class="font-medium">交易日期:</span> ${formattedDate}</p>
               </div>

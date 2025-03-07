@@ -1,13 +1,54 @@
 // components/sampleData.js
-// 台灣主要城市的大致座標
+// 台灣主要城市的大致座標和地址前綴
 const cityCoordinates = {
-    taipei: { lat: 25.0330, lng: 121.5654 },
-    taichung: { lat: 24.1477, lng: 120.6736 },
-    kaohsiung: { lat: 22.6273, lng: 120.3014 },
-    hsinchu: { lat: 24.8138, lng: 120.9675 },
-    tainan: { lat: 22.9999, lng: 120.2269 },
-    keelung: { lat: 25.1276, lng: 121.7392 },
-    taoyuan: { lat: 24.9936, lng: 121.3010 }
+    taipei: { 
+      lat: 25.0330, 
+      lng: 121.5654,
+      addressPrefix: "台北市",
+      districts: ["信義區", "大安區", "中山區", "松山區", "內湖區"]
+    },
+    taichung: { 
+      lat: 24.1477, 
+      lng: 120.6736,
+      addressPrefix: "台中市",
+      districts: ["西區", "北區", "南區", "東區", "北屯區"]
+    },
+    kaohsiung: { 
+      lat: 22.6273, 
+      lng: 120.3014,
+      addressPrefix: "高雄市",
+      districts: ["前金區", "鹽埕區", "鼓山區", "三民區", "左營區"]
+    },
+    hsinchu: { 
+      lat: 24.8138, 
+      lng: 120.9675,
+      addressPrefix: "新竹市",
+      districts: ["東區", "北區", "香山區"]
+    },
+    tainan: { 
+      lat: 22.9999, 
+      lng: 120.2269,
+      addressPrefix: "台南市",
+      districts: ["中西區", "東區", "南區", "北區", "安平區"]
+    },
+    keelung: { 
+      lat: 25.1276, 
+      lng: 121.7392,
+      addressPrefix: "基隆市",
+      districts: ["仁愛區", "信義區", "中正區", "中山區", "安樂區"]
+    },
+    taoyuan: { 
+      lat: 24.9936, 
+      lng: 121.3010,
+      addressPrefix: "桃園市",
+      districts: ["桃園區", "中壢區", "平鎮區", "八德區", "龜山區"]
+    },
+    newTaipei: {
+      lat: 25.0120, 
+      lng: 121.4650,
+      addressPrefix: "新北市",
+      districts: ["板橋區", "新莊區", "三重區", "中和區", "永和區"]
+    }
   };
   
 // 使用固定種子的隨機數生成器，確保每次生成的數據一致
@@ -31,6 +72,27 @@ const generateError = () => {
 const generatePrice = () => {
   return Math.floor(150000 + nextRandom() * 350000); // 15萬到50萬之間
 };
+
+// 生成隨機樓層
+const generateFloor = () => {
+  return Math.floor(1 + nextRandom() * 20); // 1樓到20樓
+};
+
+// 生成隨機坪數
+const generateSize = () => {
+  return Math.floor(20 + nextRandom() * 60); // 20坪到80坪
+};
+
+// 生成隨機地址
+const generateAddress = (city, district) => {
+  const roads = ["文化路", "中山路", "民生路", "建國路", "和平路", "忠孝路", "信義路", "復興路", "光明路", "仁愛路"];
+  const road = roads[Math.floor(nextRandom() * roads.length)];
+  const section = Math.floor(1 + nextRandom() * 3); // 1~3段
+  const number = Math.floor(1 + nextRandom() * 500); // 1~500號
+  const subNumber = Math.floor(nextRandom() * 50); // 0~49
+  
+  return `${city}${district}${road}一段${number}${subNumber > 0 ? '之' + subNumber : ''}號`;
+};
   
   // 生成隨機日期
   const generateDate = () => {
@@ -41,12 +103,18 @@ const generatePrice = () => {
   };
   
   // 在特定座標周圍生成隨機點位
-  const generatePointsAroundCoordinate = (baseLat, baseLng, count) => {
+  const generatePointsAroundCoordinate = (cityKey, cityInfo, count) => {
+    const { lat: baseLat, lng: baseLng, addressPrefix, districts } = cityInfo;
     const points = [];
+    
     for (let i = 0; i < count; i++) {
       const lat = baseLat + (nextRandom() - 0.5) * 0.05;
       const lng = baseLng + (nextRandom() - 0.5) * 0.05;
       const actualPrice = generatePrice();
+      const district = districts[Math.floor(nextRandom() * districts.length)];
+      const address = generateAddress(addressPrefix, district);
+      const floor = generateFloor();
+      const size = generateSize();
       
       // 確保生成的誤差有正有負
       // 使用 i 的奇偶性來決定誤差的正負，確保正負誤差大約各半
@@ -67,7 +135,12 @@ const generatePrice = () => {
         actualPrice,
         estimatedPrice,
         error,
-        date: generateDate()
+        date: generateDate(),
+        address,
+        floor,
+        size,
+        city: addressPrefix,
+        district
       });
     }
     return points;
@@ -80,9 +153,9 @@ const generatePrice = () => {
     
     let allPoints = [];
     
-    Object.values(cityCoordinates).forEach(coord => {
+    Object.entries(cityCoordinates).forEach(([cityKey, cityInfo]) => {
       const pointsCount = Math.floor(10 + nextRandom() * 20); // 每個城市10-30個點
-      const points = generatePointsAroundCoordinate(coord.lat, coord.lng, pointsCount);
+      const points = generatePointsAroundCoordinate(cityKey, cityInfo, pointsCount);
       allPoints = [...allPoints, ...points];
     });
     

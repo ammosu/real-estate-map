@@ -78,7 +78,11 @@ export default function CsvUploader({ onDataLoaded, className }) {
           // 可選欄位，如果存在則處理
           estimatedPrice: row.estimatedPrice ? parseFloat(row.estimatedPrice) : parseFloat(row.actualPrice),
           error: row.error ? parseFloat(row.error) : 0,
-          date: row.date ? new Date(row.date) : new Date()
+          date: row.date ? new Date(row.date) : new Date(),
+          // 新增可選欄位
+          size: row.size ? parseFloat(row.size) : 0,
+          floor: row.floor ? parseFloat(row.floor) : 0,
+          address: row.address || '未知地址'
         }));
 
         // 將處理後的資料傳遞給父元件
@@ -248,9 +252,12 @@ export default function CsvUploader({ onDataLoaded, className }) {
             <li><strong>estimatedPrice</strong> - 估計價格 (選填, 數值)</li>
             <li><strong>error</strong> - 誤差百分比 (選填, 數值)</li>
             <li><strong>date</strong> - 日期 (選填, 日期格式)</li>
+            <li><strong>size</strong> - 房屋坪數 (選填, 數值)</li>
+            <li><strong>floor</strong> - 樓層 (選填, 數值)</li>
+            <li><strong>address</strong> - 地址 (選填, 文字)</li>
           </ul>
-          <p className="mt-2">範例: lat,lng,actualPrice,estimatedPrice,error,date</p>
-          <p>25.0330,121.5654,20000000,21000000,5,2023-01-15</p>
+          <p className="mt-2">範例: lat,lng,actualPrice,estimatedPrice,error,date,size,floor,address</p>
+          <p>25.0330,121.5654,20000000,21000000,5,2023-01-15,45.23,12,"台北市信義區文化路一段309號"</p>
         </div>
       </div>
     </div>

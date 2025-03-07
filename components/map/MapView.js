@@ -22,7 +22,9 @@ export default function MapView({
   loading,
   dataSource,
   uploadedData,
-  currentTime
+  currentTime,
+  onMarkerClick,
+  onClusterClick
 }) {
   return (
     <div className="p-4 md:p-6">
@@ -77,7 +79,12 @@ export default function MapView({
             </div>
           </div>
         )}
-        <Map data={data || []} mapType={mapView} />
+        <Map 
+          data={data || []} 
+          mapType={mapView} 
+          onMarkerClick={onMarkerClick}
+          onClusterClick={onClusterClick}
+        />
       </div>
       
       {/* 數據狀態提示 */}

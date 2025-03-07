@@ -1,5 +1,5 @@
 // components/RealEstateMap.js
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 
 // 自定義 hooks
@@ -14,6 +14,7 @@ import StatsPanel from './map/StatsPanel';
 import LegendPanel from './map/LegendPanel';
 import InstructionsPanel from './map/InstructionsPanel';
 import CsvUploadModal from './map/CsvUploadModal';
+import PropertyCardList from './map/PropertyCardList';
 
 // 動態匯入P5背景元件
 const P5Background = dynamic(() => import('./P5Background'), { ssr: false });
@@ -26,6 +27,7 @@ export default function RealEstateMap() {
   const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [showEffects, setShowEffects] = useState(true); // 控制特效的顯示
+  const [selectedProperties, setSelectedProperties] = useState([]); // 存儲被選中的屬性
 
   // 數據管理 hook
   const {
@@ -42,6 +44,21 @@ export default function RealEstateMap() {
 
   // 統計數據 hook
   const stats = useStats(data);
+  
+  // 處理標記點擊事件
+  const handleMarkerClick = useCallback((properties) => {
+    setSelectedProperties(properties);
+  }, []);
+  
+  // 處理聚合點擊事件
+  const handleClusterClick = useCallback((properties) => {
+    setSelectedProperties(properties);
+  }, []);
+  
+  // 清除選中的屬性
+  const handleClearSelection = useCallback(() => {
+    setSelectedProperties([]);
+  }, []);
 
   return (
     <div className="p-3 md:p-6 max-w-7xl mx-auto relative">
@@ -134,7 +151,17 @@ export default function RealEstateMap() {
               dataSource={dataSource}
               uploadedData={uploadedData}
               currentTime={currentTime}
+              onMarkerClick={handleMarkerClick}
+              onClusterClick={handleClusterClick}
             />
+            
+            {/* 選中的屬性卡片列表 */}
+            {selectedProperties.length > 0 && (
+              <PropertyCardList 
+                properties={selectedProperties} 
+                onClose={handleClearSelection}
+              />
+            )}
           </div>
 
           <div className="lg:col-span-1 space-y-6">
