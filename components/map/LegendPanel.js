@@ -12,22 +12,50 @@ export default function LegendPanel() {
         </div>
         <h3 className="text-lg font-medium bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">估價誤差說明</h3>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex items-center p-3 bg-green-50 rounded-lg">
-          <div className="w-8 h-8 bg-green-500 rounded-full mr-3 shadow-sm"></div>
-          <span className="text-gray-700">誤差 ≤ 5%</span>
+      
+      {/* 正誤差（高估）說明 */}
+      <div className="mb-4">
+        <h4 className="text-md font-medium text-red-600 mb-2">正誤差（高估）</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+            <div className="w-8 h-8 bg-red-300 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 ≤ 5%</span>
+          </div>
+          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+            <div className="w-8 h-8 bg-red-400 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 5%-10%</span>
+          </div>
+          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+            <div className="w-8 h-8 bg-red-500 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 10%-15%</span>
+          </div>
+          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+            <div className="w-8 h-8 bg-red-600 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 {'>'}15%</span>
+          </div>
         </div>
-        <div className="flex items-center p-3 bg-yellow-50 rounded-lg">
-          <div className="w-8 h-8 bg-yellow-500 rounded-full mr-3 shadow-sm"></div>
-          <span className="text-gray-700">誤差 5%-10%</span>
-        </div>
-        <div className="flex items-center p-3 bg-orange-50 rounded-lg">
-          <div className="w-8 h-8 bg-orange-500 rounded-full mr-3 shadow-sm"></div>
-          <span className="text-gray-700">誤差 10%-15%</span>
-        </div>
-        <div className="flex items-center p-3 bg-red-50 rounded-lg">
-          <div className="w-8 h-8 bg-red-500 rounded-full mr-3 shadow-sm"></div>
-          <span className="text-gray-700">誤差 {'>'}15%</span>
+      </div>
+      
+      {/* 負誤差（低估）說明 */}
+      <div>
+        <h4 className="text-md font-medium text-blue-600 mb-2">負誤差（低估）</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+            <div className="w-8 h-8 bg-blue-300 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 ≤ -5%</span>
+          </div>
+          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+            <div className="w-8 h-8 bg-blue-400 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 -5% 至 -10%</span>
+          </div>
+          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+            <div className="w-8 h-8 bg-blue-500 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 -10% 至 -15%</span>
+          </div>
+          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+            <div className="w-8 h-8 bg-blue-600 rounded-full mr-3 shadow-sm"></div>
+            <span className="text-gray-700">誤差 {'<'}-15%</span>
+          </div>
         </div>
       </div>
     </div>

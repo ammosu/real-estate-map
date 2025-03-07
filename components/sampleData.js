@@ -22,9 +22,9 @@ const nextRandom = () => {
   return seededRandom(seed);
 };
 
-// 生成隨機誤差
+// 生成隨機誤差（正負值）
 const generateError = () => {
-  return nextRandom() * 20; // 0-20% 的誤差
+  return (nextRandom() * 40) - 20; // -20% 到 +20% 的誤差
 };
 
 // 生成隨機價格
@@ -47,8 +47,19 @@ const generatePrice = () => {
       const lat = baseLat + (nextRandom() - 0.5) * 0.05;
       const lng = baseLng + (nextRandom() - 0.5) * 0.05;
       const actualPrice = generatePrice();
-      const error = generateError();
-      const estimatedPrice = actualPrice * (1 + (error / 100));
+      
+      // 確保生成的誤差有正有負
+      // 使用 i 的奇偶性來決定誤差的正負，確保正負誤差大約各半
+      let error;
+      if (i % 2 === 0) {
+        // 偶數索引生成正誤差 (0% 到 20%)
+        error = nextRandom() * 20;
+      } else {
+        // 奇數索引生成負誤差 (-20% 到 0%)
+        error = (nextRandom() * 20) * -1;
+      }
+      
+      const estimatedPrice = actualPrice * (1 + (error / 100)); // 正誤差會高估，負誤差會低估
       
       points.push({
         lat,

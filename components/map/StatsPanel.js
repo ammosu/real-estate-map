@@ -14,8 +14,12 @@ export default function StatsPanel({ stats }) {
       </div>
       <div className="space-y-4">
         <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
-          <span className="text-gray-700 font-medium">平均誤差:</span>
+          <span className="text-gray-700 font-medium">平均誤差 (帶方向):</span>
           <span className="text-blue-600 font-bold text-lg">{stats.avgError}%</span>
+        </div>
+        <div className="flex items-center justify-between p-2 bg-teal-50 rounded-lg">
+          <span className="text-gray-700 font-medium">平均絕對誤差:</span>
+          <span className="text-teal-600 font-bold text-lg">{stats.avgAbsError}%</span>
         </div>
         <div className="flex items-center justify-between p-2 bg-indigo-50 rounded-lg">
           <span className="text-gray-700 font-medium">資料點數:</span>

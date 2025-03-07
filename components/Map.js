@@ -22,10 +22,22 @@ const createCustomIcon = (error) => {
   }
   
   let color;
-  if (error <= 5) color = '#10B981';
-  else if (error <= 10) color = '#FBBF24';
-  else if (error <= 15) color = '#F97316';
-  else color = '#EF4444';
+  const absError = Math.abs(error);
+  
+  // 根據誤差的正負和大小決定顏色
+  if (error >= 0) {
+    // 正誤差（高估）- 紅色系
+    if (absError <= 5) color = '#F87171'; // 淺紅
+    else if (absError <= 10) color = '#EF4444'; // 中紅
+    else if (absError <= 15) color = '#DC2626'; // 深紅
+    else color = '#B91C1C'; // 非常深紅
+  } else {
+    // 負誤差（低估）- 藍色系
+    if (absError <= 5) color = '#60A5FA'; // 淺藍
+    else if (absError <= 10) color = '#3B82F6'; // 中藍
+    else if (absError <= 15) color = '#2563EB'; // 深藍
+    else color = '#1D4ED8'; // 非常深藍
+  }
 
   return L.divIcon({
     className: 'custom-div-icon',
@@ -103,12 +115,23 @@ export default function Map({ data = [], mapType = 'map' }) {
             });
             
             const avgError = validMarkers > 0 ? totalError / validMarkers : 0;
+            const absAvgError = Math.abs(avgError);
 
             let color;
-            if (avgError <= 5) color = '#10B981';
-            else if (avgError <= 10) color = '#FBBF24';
-            else if (avgError <= 15) color = '#F97316';
-            else color = '#EF4444';
+            // 根據平均誤差的正負和大小決定顏色
+            if (avgError >= 0) {
+              // 正誤差（高估）- 紅色系
+              if (absAvgError <= 5) color = '#F87171'; // 淺紅
+              else if (absAvgError <= 10) color = '#EF4444'; // 中紅
+              else if (absAvgError <= 15) color = '#DC2626'; // 深紅
+              else color = '#B91C1C'; // 非常深紅
+            } else {
+              // 負誤差（低估）- 藍色系
+              if (absAvgError <= 5) color = '#60A5FA'; // 淺藍
+              else if (absAvgError <= 10) color = '#3B82F6'; // 中藍
+              else if (absAvgError <= 15) color = '#2563EB'; // 深藍
+              else color = '#1D4ED8'; // 非常深藍
+            }
 
             return L.divIcon({
               html: `

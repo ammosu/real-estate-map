@@ -129,13 +129,16 @@ export default function useDataManagement(timeRange, priceRange, errorRange) {
         debug.error = item.error;
         debug.errorRange = errorRange;
         
+        // 使用誤差的絕對值進行過濾，以同時處理正負誤差
+        const absError = Math.abs(item.error);
+        
         // 檢查最小值
-        if (item.error < errorRange[0]) {
+        if (absError < errorRange[0]) {
           return false;
         }
         
         // 檢查最大值 (如果最大值接近滑塊的最大值，視為不限上限)
-        if (errorRange[1] < 18 && item.error > errorRange[1]) {
+        if (errorRange[1] < 18 && absError > errorRange[1]) {
           return false;
         }
       }
