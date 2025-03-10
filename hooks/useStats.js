@@ -34,8 +34,8 @@ export default function useStats(data) {
         avgError: (totalError / data.length).toFixed(2),
         avgAbsError: (totalAbsError / data.length).toFixed(2),
         count: data.length,
-        minPrice: minPrice.toLocaleString('zh-TW'),
-        maxPrice: maxPrice.toLocaleString('zh-TW'),
+        minPrice: Math.round(minPrice).toLocaleString('zh-TW'),
+        maxPrice: Math.round(maxPrice).toLocaleString('zh-TW'),
         avgPrice: Math.round(avgPrice).toLocaleString('zh-TW')
       };
     } catch (e) {
