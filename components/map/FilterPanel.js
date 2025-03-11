@@ -144,8 +144,8 @@ export default function FilterPanel({
             <RangeSlider
               value={errorRange}
               onChange={setErrorRange}
-              min={0}
-              max={20}
+              min={-30}
+              max={30}
               step={1}
               unit="%"
               allowNoLimit={true}

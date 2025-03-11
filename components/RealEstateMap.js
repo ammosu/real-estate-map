@@ -23,7 +23,7 @@ export default function RealEstateMap() {
   // 使用自定義 hooks
   const { currentTime, timeRange, setTimeRange, formatDate } = useTimeManagement();
   const [priceRange, setPriceRange] = useState([0, 2000000]);
-  const [errorRange, setErrorRange] = useState([0, 20]);
+  const [errorRange, setErrorRange] = useState([-30, 30]);
   const [textFilter, setTextFilter] = useState(''); // 文字篩選
   const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);

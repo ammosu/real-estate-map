@@ -62,6 +62,17 @@ export default function useDataManagement(timeRange, priceRange, errorRange, tex
     };
   }, [sampleData, uploadedData, dataSource, timeRange, priceRange, errorRange, textFilter]);
 
+  // 定義常數
+  const PRICE_MAX_LIMIT = 2000000; // 價格上限值
+  const ERROR_MIN_LIMIT = -30;     // 誤差下限值
+  const ERROR_MAX_LIMIT = 30;      // 誤差上限值
+
+  // 判斷是否為不限上限
+  const isNoUpperLimit = (value, maxLimit) => value >= maxLimit;
+  
+  // 判斷是否為不限下限
+  const isNoLowerLimit = (value, minLimit) => value <= minLimit;
+
   // 安全的過濾函數
   const filterData = (data) => {
     if (!Array.isArray(data)) return [];
@@ -119,8 +130,8 @@ export default function useDataManagement(timeRange, priceRange, errorRange, tex
           return false;
         }
         
-        // 檢查最大值 (如果最大值接近滑塊的最大值，視為不限上限)
-        if (priceRange[1] < 1800000 && item.actualPrice > priceRange[1]) {
+        // 檢查最大值 (使用明確的函數判斷是否為不限上限)
+        if (!isNoUpperLimit(priceRange[1], PRICE_MAX_LIMIT) && item.actualPrice > priceRange[1]) {
           return false;
         }
       }
@@ -130,16 +141,16 @@ export default function useDataManagement(timeRange, priceRange, errorRange, tex
         debug.error = item.error;
         debug.errorRange = errorRange;
         
-        // 使用誤差的絕對值進行過濾，以同時處理正負誤差
-        const absError = Math.abs(item.error);
+        // 直接使用誤差值進行過濾，不使用絕對值，以區分正負誤差
+        const itemError = item.error;
         
-        // 檢查最小值
-        if (absError < errorRange[0]) {
+        // 檢查最小值 (使用明確的函數判斷是否為不限下限)
+        if (!isNoLowerLimit(errorRange[0], ERROR_MIN_LIMIT) && itemError < errorRange[0]) {
           return false;
         }
         
-        // 檢查最大值 (如果最大值接近滑塊的最大值，視為不限上限)
-        if (errorRange[1] < 18 && absError > errorRange[1]) {
+        // 檢查最大值 (使用明確的函數判斷是否為不限上限)
+        if (!isNoUpperLimit(errorRange[1], ERROR_MAX_LIMIT) && itemError > errorRange[1]) {
           return false;
         }
       }
