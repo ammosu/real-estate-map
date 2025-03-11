@@ -1,6 +1,8 @@
 // components/map/PropertyCardList.js
 import React, { useMemo, useState } from 'react';
 import PropertyCard from './PropertyCard';
+import TrendAnalysisChart from './TrendAnalysisChart';
+import { PropertyDataProvider } from '../../context/PropertyDataContext';
 
 // 按月份分組並排序的函數
 const groupPropertiesByMonth = (properties) => {
@@ -59,11 +61,54 @@ const groupPropertiesByMonth = (properties) => {
   return sortedGrouped;
 };
 
+// 按社區分組的函數
+const groupPropertiesByCommunity = (properties) => {
+  if (!Array.isArray(properties) || properties.length === 0) {
+    return {};
+  }
+
+  // 按社區分組
+  const grouped = properties.reduce((acc, property) => {
+    if (!property || !property.community) {
+      // 如果沒有社區信息，放入"未分類"組
+      const key = "未分類";
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(property);
+      return acc;
+    }
+    
+    const key = property.community;
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    
+    acc[key].push(property);
+    return acc;
+  }, {});
+  
+  return grouped;
+};
+
 export default function PropertyCardList({ properties, onClose }) {
+  // 頁籤狀態
+  const [activeTab, setActiveTab] = useState('list'); // 'list' 或 'trend'
+  
   // 使用 useMemo 緩存分組結果，避免不必要的重新計算
   const groupedProperties = useMemo(() => {
     return groupPropertiesByMonth(properties);
   }, [properties]);
+  
+  // 按社區分組
+  const communitiesGrouped = useMemo(() => {
+    return groupPropertiesByCommunity(properties);
+  }, [properties]);
+  
+  // 獲取社區列表
+  const communities = useMemo(() => {
+    return Object.keys(communitiesGrouped);
+  }, [communitiesGrouped]);
   
   // 追蹤每個月份的展開/收合狀態，預設第一個月份為展開狀態
   const [expandedMonths, setExpandedMonths] = useState(() => {
@@ -92,7 +137,7 @@ export default function PropertyCardList({ properties, onClose }) {
     <div className="mt-6 space-y-6 relative">
       {/* 關閉按鈕 */}
       {onClose && (
-        <button 
+        <button
           onClick={onClose}
           className="absolute -top-4 right-0 bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition-colors"
           aria-label="關閉卡片列表"
@@ -113,44 +158,101 @@ export default function PropertyCardList({ properties, onClose }) {
         </span>
       </div>
       
-      {/* 卡片列表 */}
-      {Object.entries(groupedProperties).map(([monthKey, props]) => (
-        <div key={monthKey} className="space-y-4">
-          <div 
-            className="bg-yellow-100 p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-yellow-200 transition-colors"
-            onClick={() => toggleMonth(monthKey)}
-          >
-            <div className="flex items-center">
-              <div className="mr-2 text-gray-600">
-                {expandedMonths[monthKey] ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
+      {/* 頁籤切換 */}
+      <div className="flex border-b border-gray-200">
+        <button
+          className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+            activeTab === 'list'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('list')}
+        >
+          房產列表
+        </button>
+        <button
+          className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+            activeTab === 'trend'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('trend')}
+        >
+          價格趨勢
+        </button>
+      </div>
+      
+      {/* 房產列表頁籤內容 */}
+      {activeTab === 'list' && (
+        <div className="space-y-6">
+          {Object.entries(groupedProperties).map(([monthKey, props]) => (
+            <div key={monthKey} className="space-y-4">
+              <div
+                className="bg-yellow-100 p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-yellow-200 transition-colors"
+                onClick={() => toggleMonth(monthKey)}
+              >
+                <div className="flex items-center">
+                  <div className="mr-2 text-gray-600">
+                    {expandedMonths[monthKey] ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <h3 className="font-bold">{monthKey}</h3>
+                </div>
+                <div>
+                  <span className="bg-yellow-300 px-3 py-1 rounded-full font-bold">
+                    {Math.round(props.reduce((sum, prop) => sum + prop.actualPrice, 0) / props.length).toLocaleString('zh-TW')} 元/坪
+                  </span>
+                  <span className="ml-2">交易：{props.length}筆</span>
+                </div>
               </div>
-              <h3 className="font-bold">{monthKey}</h3>
+              
+              {expandedMonths[monthKey] && (
+                <div className="space-y-4 animate-fadeIn">
+                  {props.map((property, index) => (
+                    <PropertyCard key={index} property={property} />
+                  ))}
+                </div>
+              )}
             </div>
-            <div>
-              <span className="bg-yellow-300 px-3 py-1 rounded-full font-bold">
-                {Math.round(props.reduce((sum, prop) => sum + prop.actualPrice, 0) / props.length).toLocaleString('zh-TW')} 元/坪
-              </span>
-              <span className="ml-2">交易：{props.length}筆</span>
-            </div>
-          </div>
-          
-          {expandedMonths[monthKey] && (
-            <div className="space-y-4 animate-fadeIn">
-              {props.map((property, index) => (
-                <PropertyCard key={index} property={property} />
-              ))}
-            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* 價格趨勢頁籤內容 */}
+      {activeTab === 'trend' && (
+        <div className="space-y-6">
+          {/* 如果只有一個社區或沒有社區信息，顯示整體趨勢 */}
+          {communities.length <= 1 ? (
+            <TrendAnalysisChart />
+          ) : (
+            <>
+              {/* 先顯示整體趨勢 */}
+              <div className="mb-6">
+                <h4 className="text-lg font-medium text-gray-700 mb-3">整體價格趨勢</h4>
+                <TrendAnalysisChart />
+              </div>
+              
+              {/* 然後顯示每個社區的趨勢 */}
+              <div className="space-y-8">
+                <h4 className="text-lg font-medium text-gray-700">各社區價格趨勢</h4>
+                {communities.map(community => (
+                  <div key={community} className="border-t pt-4">
+                    <h5 className="text-md font-medium text-gray-600 mb-3">{community}</h5>
+                    <TrendAnalysisChart community={community} />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
-      ))}
+      )}
     </div>
   );
 }

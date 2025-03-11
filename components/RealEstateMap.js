@@ -16,6 +16,9 @@ import InstructionsPanel from './map/InstructionsPanel';
 import CsvUploadModal from './map/CsvUploadModal';
 import PropertyCardList from './map/PropertyCardList';
 
+// 導入 PropertyDataProvider
+import { PropertyDataProvider } from '../context/PropertyDataContext';
+
 // 動態匯入P5背景元件
 const P5Background = dynamic(() => import('./P5Background'), { ssr: false });
 
@@ -160,10 +163,12 @@ export default function RealEstateMap() {
             
             {/* 選中的屬性卡片列表 */}
             {selectedProperties.length > 0 && (
-              <PropertyCardList 
-                properties={selectedProperties} 
-                onClose={handleClearSelection}
-              />
+              <PropertyDataProvider properties={selectedProperties}>
+                <PropertyCardList
+                  properties={selectedProperties}
+                  onClose={handleClearSelection}
+                />
+              </PropertyDataProvider>
             )}
           </div>
 
