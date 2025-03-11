@@ -136,7 +136,7 @@ export default function PropertyCardList({ properties, onClose }) {
             </div>
             <div>
               <span className="bg-yellow-300 px-3 py-1 rounded-full font-bold">
-                {Math.round(props[0].actualPrice).toLocaleString('zh-TW')} 元/坪
+                {Math.round(props.reduce((sum, prop) => sum + prop.actualPrice, 0) / props.length).toLocaleString('zh-TW')} 元/坪
               </span>
               <span className="ml-2">交易：{props.length}筆</span>
             </div>
