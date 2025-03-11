@@ -21,40 +21,48 @@ const createCustomIcon = (error) => {
     error = 0;
   }
   
-  let color, borderColor, textColor;
+  let color, borderColor, textColor, innerColor;
   const absError = Math.abs(error);
   
   // 根據誤差的正負和大小決定顏色
   if (error >= 0) {
     // 正誤差（高估）- 紅色系
-    textColor = 'white';
+    textColor = error >= 10 ? 'white' : '#B91C1C';
     if (absError <= 5) {
-      color = '#FECACA'; // 淺紅背景
+      color = '#FEE2E2'; // 非常淺紅背景
+      innerColor = '#FECACA'; // 淺紅內圈
       borderColor = '#F87171'; // 中紅邊框
     } else if (absError <= 10) {
-      color = '#F87171'; // 中紅背景
+      color = '#FECACA'; // 淺紅背景
+      innerColor = '#F87171'; // 中紅內圈
       borderColor = '#EF4444'; // 深紅邊框
     } else if (absError <= 15) {
-      color = '#EF4444'; // 深紅背景
+      color = '#F87171'; // 中紅背景
+      innerColor = '#EF4444'; // 深紅內圈
       borderColor = '#DC2626'; // 更深紅邊框
     } else {
-      color = '#DC2626'; // 非常深紅背景
+      color = '#EF4444'; // 深紅背景
+      innerColor = '#DC2626'; // 更深紅內圈
       borderColor = '#B91C1C'; // 極深紅邊框
     }
   } else {
     // 負誤差（低估）- 藍色系
-    textColor = 'white';
+    textColor = error <= -10 ? 'white' : '#1E40AF';
     if (absError <= 5) {
-      color = '#BFDBFE'; // 淺藍背景
+      color = '#EFF6FF'; // 非常淺藍背景
+      innerColor = '#BFDBFE'; // 淺藍內圈
       borderColor = '#60A5FA'; // 中藍邊框
     } else if (absError <= 10) {
-      color = '#60A5FA'; // 中藍背景
+      color = '#BFDBFE'; // 淺藍背景
+      innerColor = '#60A5FA'; // 中藍內圈
       borderColor = '#3B82F6'; // 深藍邊框
     } else if (absError <= 15) {
-      color = '#3B82F6'; // 深藍背景
+      color = '#60A5FA'; // 中藍背景
+      innerColor = '#3B82F6'; // 深藍內圈
       borderColor = '#2563EB'; // 更深藍邊框
     } else {
-      color = '#2563EB'; // 非常深藍背景
+      color = '#3B82F6'; // 深藍背景
+      innerColor = '#2563EB'; // 更深藍內圈
       borderColor = '#1D4ED8'; // 極深藍邊框
     }
   }
@@ -64,23 +72,34 @@ const createCustomIcon = (error) => {
     html: `
       <div style="
         background-color: ${color};
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
-        border: 3px solid ${borderColor};
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        border: 2px solid ${borderColor};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: ${textColor};
-        font-weight: bold;
-        font-size: 13px;
-        transition: transform 0.2s ease;
-      " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">${error.toFixed(1)}%</div>
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      " onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';" 
+        onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)';">
+        <div style="
+          background-color: ${innerColor};
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${textColor};
+          font-weight: bold;
+          font-size: 13px;
+        ">${error.toFixed(1)}%</div>
+      </div>
     `,
-    iconSize: [42, 42],
-    iconAnchor: [21, 21],
-    popupAnchor: [0, -21]
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    popupAnchor: [0, -22]
   });
 };
 
@@ -139,38 +158,46 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
             const avgError = validMarkers > 0 ? totalError / validMarkers : 0;
             const absAvgError = Math.abs(avgError);
 
-            let color, borderColor, textColor;
+            let color, borderColor, textColor, innerColor;
             // 根據平均誤差的正負和大小決定顏色
             if (avgError >= 0) {
               // 正誤差（高估）- 紅色系
-              textColor = 'white';
+              textColor = avgError >= 10 ? 'white' : '#B91C1C';
               if (absAvgError <= 5) {
-                color = '#FECACA'; // 淺紅背景
+                color = '#FEE2E2'; // 非常淺紅背景
+                innerColor = '#FECACA'; // 淺紅內圈
                 borderColor = '#F87171'; // 中紅邊框
               } else if (absAvgError <= 10) {
-                color = '#F87171'; // 中紅背景
+                color = '#FECACA'; // 淺紅背景
+                innerColor = '#F87171'; // 中紅內圈
                 borderColor = '#EF4444'; // 深紅邊框
               } else if (absAvgError <= 15) {
-                color = '#EF4444'; // 深紅背景
+                color = '#F87171'; // 中紅背景
+                innerColor = '#EF4444'; // 深紅內圈
                 borderColor = '#DC2626'; // 更深紅邊框
               } else {
-                color = '#DC2626'; // 非常深紅背景
+                color = '#EF4444'; // 深紅背景
+                innerColor = '#DC2626'; // 更深紅內圈
                 borderColor = '#B91C1C'; // 極深紅邊框
               }
             } else {
               // 負誤差（低估）- 藍色系
-              textColor = 'white';
+              textColor = avgError <= -10 ? 'white' : '#1E40AF';
               if (absAvgError <= 5) {
-                color = '#BFDBFE'; // 淺藍背景
+                color = '#EFF6FF'; // 非常淺藍背景
+                innerColor = '#BFDBFE'; // 淺藍內圈
                 borderColor = '#60A5FA'; // 中藍邊框
               } else if (absAvgError <= 10) {
-                color = '#60A5FA'; // 中藍背景
+                color = '#BFDBFE'; // 淺藍背景
+                innerColor = '#60A5FA'; // 中藍內圈
                 borderColor = '#3B82F6'; // 深藍邊框
               } else if (absAvgError <= 15) {
-                color = '#3B82F6'; // 深藍背景
+                color = '#60A5FA'; // 中藍背景
+                innerColor = '#3B82F6'; // 深藍內圈
                 borderColor = '#2563EB'; // 更深藍邊框
               } else {
-                color = '#2563EB'; // 非常深藍背景
+                color = '#3B82F6'; // 深藍背景
+                innerColor = '#2563EB'; // 更深藍內圈
                 borderColor = '#1D4ED8'; // 極深藍邊框
               }
             }
@@ -179,28 +206,39 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
               html: `
                 <div style="
                   background-color: ${color};
-                  width: 52px;
-                  height: 52px;
+                  width: 54px;
+                  height: 54px;
                   border-radius: 50%;
-                  border: 3px solid ${borderColor};
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                  border: 2px solid ${borderColor};
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
                   display: flex;
-                  flex-direction: column;
                   align-items: center;
                   justify-content: center;
-                  color: ${textColor};
-                  font-weight: bold;
-                  font-size: 13px;
-                  line-height: 1.2;
-                  transition: transform 0.2s ease;
-                " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                  <span>${avgError.toFixed(1)}%</span>
-                  <span style="font-size: 11px;">(${cluster.getChildCount()})</span>
+                  transition: transform 0.2s ease, box-shadow 0.2s ease;
+                " onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';" 
+                  onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)';">
+                  <div style="
+                    background-color: ${innerColor};
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    color: ${textColor};
+                    font-weight: bold;
+                    font-size: 13px;
+                    line-height: 1.2;
+                  ">
+                    <span>${avgError.toFixed(1)}%</span>
+                    <span style="font-size: 10px;">(${cluster.getChildCount()})</span>
+                  </div>
                 </div>
               `,
               className: 'custom-cluster-icon',
-              iconSize: [52, 52],
-              iconAnchor: [26, 26]
+              iconSize: [54, 54],
+              iconAnchor: [27, 27]
             });
           },
           maxClusterRadius: 80,
@@ -379,52 +417,111 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
           const address = point.address || '未提供';
           const community = point.community || '未提供';
 
+          // 根據誤差值決定顏色
+          let errorColorClass = error >= 0 ? 'text-red-500' : 'text-blue-600';
+          let errorBgClass = error >= 0 ? 'bg-red-50' : 'bg-blue-50';
+          let errorBorderClass = error >= 0 ? 'border-red-200' : 'border-blue-200';
+          
           return `
-            <div class="p-4 max-w-xs">
-              <h3 class="font-bold text-lg mb-3 border-b pb-2">房產資訊</h3>
+            <div class="p-3 max-w-xs rounded-xl shadow-lg bg-white" style="max-height: 400px; overflow-y: auto; animation: fadeIn 0.3s ease-in-out;">
+              <h3 class="font-bold text-base mb-3 text-gray-800 flex items-center">
+                <svg class="w-5 h-5 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                房產資訊
+              </h3>
               
               <div class="grid grid-cols-2 gap-2 mb-3">
-                <div>
-                  <p class="text-sm text-gray-500">坪數</p>
-                  <p class="font-medium text-lg">${area} 坪</p>
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-2 rounded-lg shadow-sm transform transition-transform hover:scale-105">
+                  <p class="text-xs text-blue-600 font-semibold flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                    </svg>
+                    坪數
+                  </p>
+                  <p class="font-medium text-gray-800">${area} 坪</p>
                 </div>
-                <div>
-                  <p class="text-sm text-gray-500">樓層</p>
-                  <p class="font-medium text-lg">${floor}</p>
-                </div>
-              </div>
-              
-              <div class="mb-3">
-                <p class="text-sm text-gray-500">社區</p>
-                <p class="font-medium">${community}</p>
-              </div>
-              
-              <div class="mb-3">
-                <p class="text-sm text-gray-500">地址</p>
-                <p class="font-medium">${address}</p>
-              </div>
-              
-              <div class="grid grid-cols-2 gap-2 mb-3 pt-2 border-t">
-                <div>
-                  <p class="text-sm text-gray-500">實際價格</p>
-                  <p class="font-medium">${actualPrice} 元/坪</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500">估計價格</p>
-                  <p class="font-medium">${estimatedPrice} 元/坪</p>
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-2 rounded-lg shadow-sm transform transition-transform hover:scale-105">
+                  <p class="text-xs text-purple-600 font-semibold flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    樓層
+                  </p>
+                  <p class="font-medium text-gray-800">${floor}</p>
                 </div>
               </div>
               
-              <div class="flex justify-between items-center pt-2 border-t">
-                <div>
-                  <p class="text-sm text-gray-500">交易日期</p>
-                  <p class="font-medium">${formattedDate}</p>
+              <div class="mb-3 bg-gradient-to-r from-green-50 to-emerald-50 p-2 rounded-lg shadow-sm">
+                <p class="text-xs text-green-600 font-semibold flex items-center">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  社區
+                </p>
+                <p class="font-medium text-sm text-gray-800">${community}</p>
+              </div>
+              
+              <div class="mb-3 bg-gradient-to-r from-amber-50 to-yellow-50 p-2 rounded-lg shadow-sm">
+                <p class="text-xs text-amber-600 font-semibold flex items-center">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  地址
+                </p>
+                <p class="font-medium text-sm text-gray-800">${address}</p>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-2 mb-3 pt-2 border-t border-gray-100">
+                <div class="bg-gradient-to-br from-red-50 to-orange-50 p-2 rounded-lg shadow-sm">
+                  <p class="text-xs text-red-500 font-semibold flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    實際價格
+                  </p>
+                  <p class="font-medium text-sm text-gray-800">${actualPrice} 元/坪</p>
                 </div>
-                <div class="text-center">
-                  <p class="text-sm text-gray-500">誤差</p>
-                  <p class="font-bold text-lg ${error >= 0 ? 'text-red-500' : 'text-blue-500'}">${error.toFixed(1)}%</p>
+                <div class="bg-gradient-to-br from-cyan-50 to-sky-50 p-2 rounded-lg shadow-sm">
+                  <p class="text-xs text-cyan-600 font-semibold flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    估計價格
+                  </p>
+                  <p class="font-medium text-sm text-gray-800">${estimatedPrice} 元/坪</p>
                 </div>
               </div>
+              
+              <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                <div class="bg-gradient-to-r from-gray-50 to-slate-50 p-2 rounded-lg shadow-sm">
+                  <p class="text-xs text-gray-500 font-semibold flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    交易日期
+                  </p>
+                  <p class="font-medium text-sm text-gray-800">${formattedDate}</p>
+                </div>
+                <div class="text-center ${errorBgClass} ${errorBorderClass} border p-2 rounded-lg shadow-md transform transition-transform hover:scale-105"
+                     style="background: ${error >= 0 ? 'linear-gradient(135deg, #FEE2E2, #FECACA)' : 'linear-gradient(135deg, #EFF6FF, #BFDBFE)'}">
+                  <p class="text-xs ${error >= 0 ? 'text-red-600' : 'text-blue-600'} font-semibold flex items-center justify-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                    </svg>
+                    誤差
+                  </p>
+                  <p class="font-bold ${errorColorClass}">${error.toFixed(1)}%</p>
+                </div>
+              </div>
+              
+              <style>
+                @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(10px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+              </style>
             </div>
           `;
         });
