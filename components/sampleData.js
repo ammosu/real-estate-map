@@ -144,12 +144,26 @@ const generateCommunityName = (city, district) => {
       
       const estimatedPrice = actualPrice * (1 + (error / 100)); // 正誤差會高估，負誤差會低估
       
+      // 生成含社區調整的估值 (在基本估值基礎上加上 ±5% 的調整)
+      const communityAdjustment = (nextRandom() * 0.1) - 0.05; // -5% 到 +5% 的社區調整
+      const estimatedPriceWithCommunity = estimatedPrice * (1 + communityAdjustment);
+      const errorWithCommunity = ((estimatedPriceWithCommunity - actualPrice) / actualPrice) * 100;
+      
+      // 生成含社區和時間調整的估值 (在含社區調整估值基礎上再加上 ±5% 的時間調整)
+      const timeAdjustment = (nextRandom() * 0.1) - 0.05; // -5% 到 +5% 的時間調整
+      const estimatedPriceWithCommunityAndTime = estimatedPriceWithCommunity * (1 + timeAdjustment);
+      const errorWithCommunityAndTime = ((estimatedPriceWithCommunityAndTime - actualPrice) / actualPrice) * 100;
+      
       points.push({
         lat,
         lng,
         actualPrice,
         estimatedPrice,
+        estimatedPriceWithCommunity,
+        estimatedPriceWithCommunityAndTime,
         error,
+        errorWithCommunity,
+        errorWithCommunityAndTime,
         date: generateDate(),
         address,
         floor,

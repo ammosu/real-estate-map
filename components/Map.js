@@ -422,6 +422,10 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
             Math.round(point.actualPrice).toLocaleString('zh-TW') : '未知';
           const estimatedPrice = typeof point.estimatedPrice === 'number' ?
             Math.round(point.estimatedPrice).toLocaleString('zh-TW') : '未知';
+          const estimatedPriceWithCommunity = typeof point.estimatedPriceWithCommunity === 'number' ?
+            Math.round(point.estimatedPriceWithCommunity).toLocaleString('zh-TW') : '未知';
+          const estimatedPriceWithCommunityAndTime = typeof point.estimatedPriceWithCommunityAndTime === 'number' ?
+            Math.round(point.estimatedPriceWithCommunityAndTime).toLocaleString('zh-TW') : '未知';
 
           // 處理新增的屬性，確保即使資料不存在也能優雅處理
           const area = point.size !== undefined && point.size !== null ? parseFloat(point.size).toFixed(2) : '未提供';
@@ -485,24 +489,45 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
                 <p class="font-medium text-sm text-gray-800">${address}</p>
               </div>
               
-              <div class="grid grid-cols-2 gap-2 mb-3 pt-2 border-t border-gray-100">
-                <div class="bg-gradient-to-br from-red-50 to-orange-50 p-2 rounded-lg shadow-sm">
-                  <p class="text-xs text-red-500 font-semibold flex items-center">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    實際價格
-                  </p>
-                  <p class="font-medium text-sm text-gray-800">${actualPrice} 元/坪</p>
-                </div>
-                <div class="bg-gradient-to-br from-cyan-50 to-sky-50 p-2 rounded-lg shadow-sm">
-                  <p class="text-xs text-cyan-600 font-semibold flex items-center">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                    </svg>
-                    估計價格
-                  </p>
-                  <p class="font-medium text-sm text-gray-800">${estimatedPrice} 元/坪</p>
+              <div class="pt-2 border-t border-gray-100 mb-3">
+                <p class="text-xs text-gray-600 font-semibold mb-2">價格比較</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="bg-gradient-to-br from-red-50 to-orange-50 p-2 rounded-lg shadow-sm">
+                    <p class="text-xs text-red-500 font-semibold flex items-center">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      實際價格
+                    </p>
+                    <p class="font-medium text-sm text-gray-800">${actualPrice} 元/坪</p>
+                  </div>
+                  <div class="bg-gradient-to-br from-cyan-50 to-sky-50 p-2 rounded-lg shadow-sm">
+                    <p class="text-xs text-cyan-600 font-semibold flex items-center">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                      </svg>
+                      基本估值
+                    </p>
+                    <p class="font-medium text-sm text-gray-800">${estimatedPrice} 元/坪</p>
+                  </div>
+                  <div class="bg-gradient-to-br from-green-50 to-teal-50 p-2 rounded-lg shadow-sm">
+                    <p class="text-xs text-green-600 font-semibold flex items-center">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                      </svg>
+                      含社區調整估值
+                    </p>
+                    <p class="font-medium text-sm text-gray-800">${estimatedPriceWithCommunity} 元/坪</p>
+                  </div>
+                  <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-2 rounded-lg shadow-sm">
+                    <p class="text-xs text-purple-600 font-semibold flex items-center">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                      </svg>
+                      含社區時間調整估值
+                    </p>
+                    <p class="font-medium text-sm text-gray-800">${estimatedPriceWithCommunityAndTime} 元/坪</p>
+                  </div>
                 </div>
               </div>
               

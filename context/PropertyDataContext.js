@@ -61,19 +61,31 @@ export const PropertyDataProvider = ({ children, properties }) => {
             properties: [],
             totalTradePrice: 0,
             totalEstimatedPrice: 0,
+            totalEstimatedPriceWithCommunity: 0,
+            totalEstimatedPriceWithCommunityAndTime: 0,
             count: 0,
-            errors: []
+            errors: [],
+            errorsWithCommunity: [],
+            errorsWithCommunityAndTime: []
           };
         }
         
         acc[yearMonth].properties.push(property);
         acc[yearMonth].totalTradePrice += property.actualPrice || 0;
         acc[yearMonth].totalEstimatedPrice += property.estimatedPrice || 0;
+        acc[yearMonth].totalEstimatedPriceWithCommunity += property.estimatedPriceWithCommunity || 0;
+        acc[yearMonth].totalEstimatedPriceWithCommunityAndTime += property.estimatedPriceWithCommunityAndTime || 0;
         acc[yearMonth].count += 1;
         
         // 計算誤差
         if (property.error !== undefined) {
           acc[yearMonth].errors.push(property.error);
+        }
+        if (property.errorWithCommunity !== undefined) {
+          acc[yearMonth].errorsWithCommunity.push(property.errorWithCommunity);
+        }
+        if (property.errorWithCommunityAndTime !== undefined) {
+          acc[yearMonth].errorsWithCommunityAndTime.push(property.errorWithCommunityAndTime);
         }
       } catch (error) {
         console.error('日期處理錯誤:', error);
@@ -89,23 +101,45 @@ export const PropertyDataProvider = ({ children, properties }) => {
         const group = monthlyGroups[yearMonth];
         const avgTradePrice = group.count > 0 ? group.totalTradePrice / group.count : 0;
         const avgEstimatedPrice = group.count > 0 ? group.totalEstimatedPrice / group.count : 0;
+        const avgEstimatedPriceWithCommunity = group.count > 0 ? group.totalEstimatedPriceWithCommunity / group.count : 0;
+        const avgEstimatedPriceWithCommunityAndTime = group.count > 0 ? group.totalEstimatedPriceWithCommunityAndTime / group.count : 0;
         
         // 計算誤差指標
         let mape = 0; // 平均絕對百分比誤差
         let mpe = 0;  // 平均百分比誤差
+        let mapeWithCommunity = 0;
+        let mpeWithCommunity = 0;
+        let mapeWithCommunityAndTime = 0;
+        let mpeWithCommunityAndTime = 0;
         
         if (group.errors.length > 0) {
           mape = group.errors.reduce((sum, error) => sum + Math.abs(error), 0) / group.errors.length;
           mpe = group.errors.reduce((sum, error) => sum + error, 0) / group.errors.length;
         }
         
+        if (group.errorsWithCommunity.length > 0) {
+          mapeWithCommunity = group.errorsWithCommunity.reduce((sum, error) => sum + Math.abs(error), 0) / group.errorsWithCommunity.length;
+          mpeWithCommunity = group.errorsWithCommunity.reduce((sum, error) => sum + error, 0) / group.errorsWithCommunity.length;
+        }
+        
+        if (group.errorsWithCommunityAndTime.length > 0) {
+          mapeWithCommunityAndTime = group.errorsWithCommunityAndTime.reduce((sum, error) => sum + Math.abs(error), 0) / group.errorsWithCommunityAndTime.length;
+          mpeWithCommunityAndTime = group.errorsWithCommunityAndTime.reduce((sum, error) => sum + error, 0) / group.errorsWithCommunityAndTime.length;
+        }
+        
         return {
           yearMonth,
           avgTradePrice,
           avgEstimatedPrice,
+          avgEstimatedPriceWithCommunity,
+          avgEstimatedPriceWithCommunityAndTime,
           count: group.count,
           mape,
-          mpe
+          mpe,
+          mapeWithCommunity,
+          mpeWithCommunity,
+          mapeWithCommunityAndTime,
+          mpeWithCommunityAndTime
         };
       });
 
@@ -139,19 +173,31 @@ export const PropertyDataProvider = ({ children, properties }) => {
               properties: [],
               totalTradePrice: 0,
               totalEstimatedPrice: 0,
+              totalEstimatedPriceWithCommunity: 0,
+              totalEstimatedPriceWithCommunityAndTime: 0,
               count: 0,
-              errors: []
+              errors: [],
+              errorsWithCommunity: [],
+              errorsWithCommunityAndTime: []
             };
           }
           
           acc[yearMonth].properties.push(property);
           acc[yearMonth].totalTradePrice += property.actualPrice || 0;
           acc[yearMonth].totalEstimatedPrice += property.estimatedPrice || 0;
+          acc[yearMonth].totalEstimatedPriceWithCommunity += property.estimatedPriceWithCommunity || 0;
+          acc[yearMonth].totalEstimatedPriceWithCommunityAndTime += property.estimatedPriceWithCommunityAndTime || 0;
           acc[yearMonth].count += 1;
           
           // 計算誤差
           if (property.error !== undefined) {
             acc[yearMonth].errors.push(property.error);
+          }
+          if (property.errorWithCommunity !== undefined) {
+            acc[yearMonth].errorsWithCommunity.push(property.errorWithCommunity);
+          }
+          if (property.errorWithCommunityAndTime !== undefined) {
+            acc[yearMonth].errorsWithCommunityAndTime.push(property.errorWithCommunityAndTime);
           }
         } catch (error) {
           console.error('日期處理錯誤:', error);
@@ -167,23 +213,45 @@ export const PropertyDataProvider = ({ children, properties }) => {
           const group = monthlyGroups[yearMonth];
           const avgTradePrice = group.count > 0 ? group.totalTradePrice / group.count : 0;
           const avgEstimatedPrice = group.count > 0 ? group.totalEstimatedPrice / group.count : 0;
+          const avgEstimatedPriceWithCommunity = group.count > 0 ? group.totalEstimatedPriceWithCommunity / group.count : 0;
+          const avgEstimatedPriceWithCommunityAndTime = group.count > 0 ? group.totalEstimatedPriceWithCommunityAndTime / group.count : 0;
           
           // 計算誤差指標
           let mape = 0; // 平均絕對百分比誤差
           let mpe = 0;  // 平均百分比誤差
+          let mapeWithCommunity = 0;
+          let mpeWithCommunity = 0;
+          let mapeWithCommunityAndTime = 0;
+          let mpeWithCommunityAndTime = 0;
           
           if (group.errors.length > 0) {
             mape = group.errors.reduce((sum, error) => sum + Math.abs(error), 0) / group.errors.length;
             mpe = group.errors.reduce((sum, error) => sum + error, 0) / group.errors.length;
           }
           
+          if (group.errorsWithCommunity.length > 0) {
+            mapeWithCommunity = group.errorsWithCommunity.reduce((sum, error) => sum + Math.abs(error), 0) / group.errorsWithCommunity.length;
+            mpeWithCommunity = group.errorsWithCommunity.reduce((sum, error) => sum + error, 0) / group.errorsWithCommunity.length;
+          }
+          
+          if (group.errorsWithCommunityAndTime.length > 0) {
+            mapeWithCommunityAndTime = group.errorsWithCommunityAndTime.reduce((sum, error) => sum + Math.abs(error), 0) / group.errorsWithCommunityAndTime.length;
+            mpeWithCommunityAndTime = group.errorsWithCommunityAndTime.reduce((sum, error) => sum + error, 0) / group.errorsWithCommunityAndTime.length;
+          }
+          
           return {
             yearMonth,
             avgTradePrice,
             avgEstimatedPrice,
+            avgEstimatedPriceWithCommunity,
+            avgEstimatedPriceWithCommunityAndTime,
             count: group.count,
             mape,
-            mpe
+            mpe,
+            mapeWithCommunity,
+            mpeWithCommunity,
+            mapeWithCommunityAndTime,
+            mpeWithCommunityAndTime
           };
         });
     });

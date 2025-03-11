@@ -77,9 +77,23 @@ export default function CsvUploader({ onDataLoaded, className }) {
           actualPrice: parseFloat(row.交易價格),
           // 可選欄位，如果存在則處理
           estimatedPrice: row.估值 ? parseFloat(row.估值) : parseFloat(row.交易價格),
+          // 新增兩個估值欄位
+          estimatedPriceWithCommunity: row.估值_含社區調整 ? parseFloat(row.估值_含社區調整) : 
+            (row.估值 ? parseFloat(row.估值) : parseFloat(row.交易價格)),
+          estimatedPriceWithCommunityAndTime: row.估值_含社區調整_含時間調整 ? parseFloat(row.估值_含社區調整_含時間調整) : 
+            (row.估值_含社區調整 ? parseFloat(row.估值_含社區調整) : 
+              (row.估值 ? parseFloat(row.估值) : parseFloat(row.交易價格))),
           // 根據交易價格和估值計算百分比誤差，而不是使用CSV中的誤差欄位
           error: row.估值 && row.交易價格 ? 
             ((parseFloat(row.估值) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 0,
+          // 新增兩個誤差欄位
+          errorWithCommunity: row.估值_含社區調整 && row.交易價格 ? 
+            ((parseFloat(row.估值_含社區調整) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 
+            (row.估值 && row.交易價格 ? ((parseFloat(row.估值) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 0),
+          errorWithCommunityAndTime: row.估值_含社區調整_含時間調整 && row.交易價格 ? 
+            ((parseFloat(row.估值_含社區調整_含時間調整) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 
+            (row.估值_含社區調整 && row.交易價格 ? ((parseFloat(row.估值_含社區調整) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 
+              (row.估值 && row.交易價格 ? ((parseFloat(row.估值) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 0)),
           date: row.交易年月日 ? new Date(row.交易年月日) : new Date(),
           // 可選欄位
           size: row.房屋坪數 ? parseFloat(row.房屋坪數) : 0,
@@ -256,6 +270,8 @@ export default function CsvUploader({ onDataLoaded, className }) {
             <li><strong>經度</strong> - 經度座標 (必要, 數值)</li>
             <li><strong>交易價格</strong> - 實際交易價格 (必要, 數值)</li>
             <li><strong>估值</strong> - 估計價格 (選填, 數值)</li>
+            <li><strong>估值_含社區調整</strong> - 含社區調整的估計價格 (選填, 數值)</li>
+            <li><strong>估值_含社區調整_含時間調整</strong> - 含社區和時間調整的估計價格 (選填, 數值)</li>
             <li><strong>誤差</strong> - 誤差百分比 (選填, 數值, 將自動根據交易價格和估值計算)</li>
             <li><strong>交易年月日</strong> - 交易日期 (選填, 日期格式)</li>
             <li><strong>房屋坪數</strong> - 房屋坪數 (選填, 數值)</li>
@@ -265,8 +281,8 @@ export default function CsvUploader({ onDataLoaded, className }) {
             <li><strong>行政區</strong> - 行政區名稱 (選填, 文字)</li>
             <li><strong>社區名稱</strong> - 社區名稱 (選填, 文字)</li>
           </ul>
-          <p className="mt-2">範例: 緯度,經度,交易價格,估值,誤差,交易年月日,房屋坪數,所在樓層,地址,縣市,行政區,社區名稱</p>
-          <p>25.0330,121.5654,20000000,21000000,5,2023-01-15,45.23,12,"台北市信義區文化路一段309號","台北市","信義區","信義帝寶"</p>
+          <p className="mt-2">範例: 緯度,經度,交易價格,估值,估值_含社區調整,估值_含社區調整_含時間調整,誤差,交易年月日,房屋坪數,所在樓層,地址,縣市,行政區,社區名稱</p>
+          <p>25.0330,121.5654,20000000,21000000,21500000,22000000,5,2023-01-15,45.23,12,"台北市信義區文化路一段309號","台北市","信義區","信義帝寶"</p>
         </div>
       </div>
     </div>

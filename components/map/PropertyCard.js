@@ -10,6 +10,8 @@ export default function PropertyCard({ property }) {
     floor = 0,
     actualPrice = 0,
     estimatedPrice = 0,
+    estimatedPriceWithCommunity = 0,
+    estimatedPriceWithCommunityAndTime = 0,
     city = '',
     district = '',
     community = ''
@@ -55,13 +57,27 @@ export default function PropertyCard({ property }) {
           <div className="text-gray-500 text-sm">樓層</div>
           <div className="font-medium">{floor}F</div>
         </div>
-        <div>
-          <div className="text-gray-500 text-sm">交易價格 (元/坪)</div>
-          <div className="font-medium text-blue-500">{Math.round(actualPrice).toLocaleString('zh-TW')}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm">估值 (元/坪)</div>
-          <div className="font-medium text-orange-500">{Math.round(estimatedPrice).toLocaleString('zh-TW')}</div>
+      </div>
+      
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+        <h5 className="text-sm font-medium text-gray-700 mb-2">價格比較</h5>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-gray-500 text-sm">交易價格 (元/坪)</div>
+            <div className="font-medium text-blue-500">{Math.round(actualPrice).toLocaleString('zh-TW')}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-sm">基本估值 (元/坪)</div>
+            <div className="font-medium text-orange-500">{Math.round(estimatedPrice).toLocaleString('zh-TW')}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-sm">含社區調整估值 (元/坪)</div>
+            <div className="font-medium text-green-500">{Math.round(estimatedPriceWithCommunity).toLocaleString('zh-TW')}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-sm">含社區時間調整估值 (元/坪)</div>
+            <div className="font-medium text-purple-500">{Math.round(estimatedPriceWithCommunityAndTime).toLocaleString('zh-TW')}</div>
+          </div>
         </div>
       </div>
     </div>
