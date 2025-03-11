@@ -68,15 +68,48 @@ export default function PropertyCard({ property }) {
           </div>
           <div>
             <div className="text-gray-500 text-sm">基本估值 (元/坪)</div>
-            <div className="font-medium text-orange-500">{Math.round(estimatedPrice).toLocaleString('zh-TW')}</div>
+            <div className="flex items-center">
+              <span className="font-medium text-orange-500">{Math.round(estimatedPrice).toLocaleString('zh-TW')}</span>
+              {actualPrice > 0 && (
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  ((estimatedPrice - actualPrice) / actualPrice * 100) >= 0
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  PE: {((estimatedPrice - actualPrice) / actualPrice * 100).toFixed(2)}%
+                </span>
+              )}
+            </div>
           </div>
           <div>
             <div className="text-gray-500 text-sm">含社區調整估值 (元/坪)</div>
-            <div className="font-medium text-green-500">{Math.round(estimatedPriceWithCommunity).toLocaleString('zh-TW')}</div>
+            <div className="flex items-center">
+              <span className="font-medium text-green-500">{Math.round(estimatedPriceWithCommunity).toLocaleString('zh-TW')}</span>
+              {actualPrice > 0 && (
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  ((estimatedPriceWithCommunity - actualPrice) / actualPrice * 100) >= 0
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  PE: {((estimatedPriceWithCommunity - actualPrice) / actualPrice * 100).toFixed(2)}%
+                </span>
+              )}
+            </div>
           </div>
           <div>
             <div className="text-gray-500 text-sm">含社區時間調整估值 (元/坪)</div>
-            <div className="font-medium text-purple-500">{Math.round(estimatedPriceWithCommunityAndTime).toLocaleString('zh-TW')}</div>
+            <div className="flex items-center">
+              <span className="font-medium text-purple-500">{Math.round(estimatedPriceWithCommunityAndTime).toLocaleString('zh-TW')}</span>
+              {actualPrice > 0 && (
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  ((estimatedPriceWithCommunityAndTime - actualPrice) / actualPrice * 100) >= 0
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  PE: {((estimatedPriceWithCommunityAndTime - actualPrice) / actualPrice * 100).toFixed(2)}%
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
