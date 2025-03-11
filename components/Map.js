@@ -144,19 +144,30 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
               });
             }
             
-            // 計算平均誤差
+            // 計算平均誤差和標準差
             let totalError = 0;
             let validMarkers = 0;
+            let errors = [];
             
             childMarkers.forEach(marker => {
               if (marker.options && typeof marker.options.error === 'number') {
                 totalError += marker.options.error;
                 validMarkers++;
+                errors.push(marker.options.error);
               }
             });
             
             const avgError = validMarkers > 0 ? totalError / validMarkers : 0;
             const absAvgError = Math.abs(avgError);
+            
+            // 計算標準差
+            let stdDev = 0;
+            if (validMarkers > 1) {
+              const sumSquaredDiff = errors.reduce((sum, error) => {
+                return sum + Math.pow(error - avgError, 2);
+              }, 0);
+              stdDev = Math.sqrt(sumSquaredDiff / validMarkers);
+            }
 
             let color, borderColor, textColor, innerColor;
             // 根據平均誤差的正負和大小決定顏色
@@ -228,11 +239,12 @@ export default function Map({ data = [], mapType = 'map', onMarkerClick, onClust
                     justify-content: center;
                     color: ${textColor};
                     font-weight: bold;
-                    font-size: 13px;
-                    line-height: 1.2;
+                    font-size: 12px;
+                    line-height: 1.1;
                   ">
                     <span>${avgError.toFixed(1)}%</span>
-                    <span style="font-size: 10px;">(${cluster.getChildCount()})</span>
+                    <span style="font-size: 9px;">σ:${stdDev.toFixed(1)}%</span>
+                    <span style="font-size: 9px;">(${cluster.getChildCount()})</span>
                   </div>
                 </div>
               `,
