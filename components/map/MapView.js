@@ -106,7 +106,7 @@ export default function MapView({
               顯示 <span className="font-medium">{data.length}</span> 個資料點
               {data.length === 0 && !loading ? ' (沒有符合條件的資料)' : ''}
               {dataSource === 'uploaded' && uploadedData.length > 0 ? ' (使用上傳資料)' : ''}
-              {dataSource === 'sample' ? ' (使用樣本資料)' : ''}
+              {dataSource === 'sample' ? ' (使用範例資料)' : ''}
             </span>
           )}
         </div>

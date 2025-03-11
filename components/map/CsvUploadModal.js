@@ -63,7 +63,7 @@ export default function CsvUploadModal({
               ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
               : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
           >
-            使用樣本資料
+            使用範例資料
           </button>
           <button
             onClick={() => setDataSource('uploaded')}
