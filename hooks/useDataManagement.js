@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { generateSampleData } from '../components/sampleData';
 
-export default function useDataManagement(timeRange, priceRange, errorRange) {
+export default function useDataManagement(timeRange, priceRange, errorRange, textFilter) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState('sample'); // 'sample' or 'uploaded'
@@ -60,7 +60,7 @@ export default function useDataManagement(timeRange, priceRange, errorRange) {
     return () => {
       clearTimeout(timerId);
     };
-  }, [sampleData, uploadedData, dataSource, timeRange, priceRange, errorRange]);
+  }, [sampleData, uploadedData, dataSource, timeRange, priceRange, errorRange, textFilter]);
 
   // 安全的過濾函數
   const filterData = (data) => {
@@ -76,7 +76,8 @@ export default function useDataManagement(timeRange, priceRange, errorRange) {
     console.log("過濾條件:", {
       timeRange,
       priceRange,
-      errorRange
+      errorRange,
+      textFilter
     });
     
     return data.filter(item => {
@@ -139,6 +140,24 @@ export default function useDataManagement(timeRange, priceRange, errorRange) {
         
         // 檢查最大值 (如果最大值接近滑塊的最大值，視為不限上限)
         if (errorRange[1] < 18 && absError > errorRange[1]) {
+          return false;
+        }
+      }
+      
+      // 文字篩選
+      if (textFilter && textFilter.trim() !== '') {
+        const searchText = textFilter.trim().toLowerCase();
+        const district = (item.district || '').toLowerCase();
+        const address = (item.address || '').toLowerCase();
+        const community = (item.community || '').toLowerCase();
+        
+        // 檢查行政區、地址和社區名稱是否包含搜尋文字
+        const matchesText = 
+          district.includes(searchText) || 
+          address.includes(searchText) || 
+          community.includes(searchText);
+        
+        if (!matchesText) {
           return false;
         }
       }

@@ -11,6 +11,8 @@ export default function FilterPanel({
   setPriceRange,
   errorRange,
   setErrorRange,
+  textFilter,
+  setTextFilter,
   formatDate,
   formatPrice
 }) {
@@ -29,7 +31,23 @@ export default function FilterPanel({
           <h3 className="text-lg font-medium bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">篩選條件</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* 文字搜尋輸入框 */}
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              文字搜尋:
+            </label>
+            <input
+              type="text"
+              placeholder="搜尋行政區、地址或社區名稱"
+              className="w-full p-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+              value={textFilter}
+              onChange={(e) => setTextFilter(e.target.value)}
+            />
+          </div>
           {/* 時間範圍選擇 */}
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">

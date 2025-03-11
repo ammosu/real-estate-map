@@ -24,6 +24,7 @@ export default function RealEstateMap() {
   const { currentTime, timeRange, setTimeRange, formatDate } = useTimeManagement();
   const [priceRange, setPriceRange] = useState([0, 2000000]);
   const [errorRange, setErrorRange] = useState([0, 20]);
+  const [textFilter, setTextFilter] = useState(''); // 文字篩選
   const [mapView, setMapView] = useState('map'); // 'map' or 'satellite'
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [showEffects, setShowEffects] = useState(true); // 控制特效的顯示
@@ -40,7 +41,7 @@ export default function RealEstateMap() {
     uploadedData,
     handleCsvDataLoaded,
     formatPrice
-  } = useDataManagement(timeRange, priceRange, errorRange);
+  } = useDataManagement(timeRange, priceRange, errorRange, textFilter);
 
   // 統計數據 hook
   const stats = useStats(data);
@@ -136,6 +137,8 @@ export default function RealEstateMap() {
           setPriceRange={setPriceRange}
           errorRange={errorRange}
           setErrorRange={setErrorRange}
+          textFilter={textFilter}
+          setTextFilter={setTextFilter}
           formatDate={formatDate}
           formatPrice={formatPrice}
         />
