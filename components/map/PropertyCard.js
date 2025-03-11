@@ -9,7 +9,10 @@ export default function PropertyCard({ property }) {
     size = 0,
     floor = 0,
     actualPrice = 0,
-    estimatedPrice = 0
+    estimatedPrice = 0,
+    city = '',
+    district = '',
+    community = ''
   } = property || {};
   
   // 格式化日期
@@ -17,15 +20,30 @@ export default function PropertyCard({ property }) {
   
   return (
     <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100">
-      <div className="flex items-center mb-2">
-        <div className="bg-blue-100 p-2 rounded-full mr-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+      <div className="flex flex-col mb-3">
+        <div className="flex items-center mb-1">
+          <div className="bg-blue-100 p-2 rounded-full mr-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h4 className="font-medium">{address}</h4>
+          <span className="ml-auto text-sm text-gray-500">{formattedDate}</span>
         </div>
-        <h4 className="font-medium">{address}</h4>
-        <span className="ml-auto text-sm text-gray-500">{formattedDate}</span>
+        
+        {community && (
+          <div className="flex items-center ml-9 text-sm">
+            <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded mr-2">
+              {community}
+            </span>
+            {city && district && (
+              <span className="text-gray-500">
+                {city} {district}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="grid grid-cols-2 gap-4 mt-3">

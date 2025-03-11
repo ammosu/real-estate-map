@@ -93,6 +93,21 @@ const generateAddress = (city, district) => {
   
   return `${city}${district}${road}一段${number}${subNumber > 0 ? '之' + subNumber : ''}號`;
 };
+
+// 生成隨機社區名稱
+const generateCommunityName = (city, district) => {
+  const prefixes = ["豪景", "翠堤", "帝寶", "皇家", "富貴", "尊爵", "雅緻", "麗景", "星河", "御花園"];
+  const suffixes = ["社區", "花園", "大廈", "廣場", "城堡", "莊園", "山莊", "別墅", "公寓", ""];
+  
+  const prefix = prefixes[Math.floor(nextRandom() * prefixes.length)];
+  const suffix = suffixes[Math.floor(nextRandom() * suffixes.length)];
+  
+  // 有時候使用城市或區域名稱作為前綴
+  const useCityPrefix = nextRandom() > 0.7;
+  const cityPrefix = useCityPrefix ? city.replace("市", "") : "";
+  
+  return `${cityPrefix}${prefix}${suffix}`;
+};
   
   // 生成隨機日期
   const generateDate = () => {
@@ -140,7 +155,8 @@ const generateAddress = (city, district) => {
         floor,
         size,
         city: addressPrefix,
-        district
+        district,
+        community: generateCommunityName(addressPrefix, district)
       });
     }
     return points;

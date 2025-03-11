@@ -10,7 +10,7 @@ export default function CsvUploader({ onDataLoaded, className }) {
   const fileInputRef = useRef(null);
 
   // 必要欄位檢查
-  const requiredFields = ['lat', 'lng', 'actualPrice'];
+  const requiredFields = ['緯度', '經度', '交易價格'];
 
   const validateCsvData = (data) => {
     if (!Array.isArray(data) || data.length === 0) {
@@ -33,7 +33,7 @@ export default function CsvUploader({ onDataLoaded, className }) {
       const row = data[i];
       
       // 檢查緯度和經度是否為有效數字
-      if (isNaN(parseFloat(row.lat)) || isNaN(parseFloat(row.lng))) {
+      if (isNaN(parseFloat(row.緯度)) || isNaN(parseFloat(row.經度))) {
         return { 
           valid: false, 
           message: `第 ${i + 1} 行: 緯度或經度不是有效數字` 
@@ -41,7 +41,7 @@ export default function CsvUploader({ onDataLoaded, className }) {
       }
       
       // 檢查價格是否為有效數字
-      if (isNaN(parseFloat(row.actualPrice))) {
+      if (isNaN(parseFloat(row.交易價格))) {
         return { 
           valid: false, 
           message: `第 ${i + 1} 行: 價格不是有效數字` 
@@ -72,17 +72,23 @@ export default function CsvUploader({ onDataLoaded, className }) {
 
         // 處理資料，確保所有必要欄位都是正確的資料類型
         const processedData = data.map(row => ({
-          lat: parseFloat(row.lat),
-          lng: parseFloat(row.lng),
-          actualPrice: parseFloat(row.actualPrice),
+          lat: parseFloat(row.緯度),
+          lng: parseFloat(row.經度),
+          actualPrice: parseFloat(row.交易價格),
           // 可選欄位，如果存在則處理
-          estimatedPrice: row.estimatedPrice ? parseFloat(row.estimatedPrice) : parseFloat(row.actualPrice),
-          error: row.error ? parseFloat(row.error) : 0,
-          date: row.date ? new Date(row.date) : new Date(),
-          // 新增可選欄位
-          size: row.size ? parseFloat(row.size) : 0,
-          floor: row.floor ? parseFloat(row.floor) : 0,
-          address: row.address || '未知地址'
+          estimatedPrice: row.估值 ? parseFloat(row.估值) : parseFloat(row.交易價格),
+          // 根據交易價格和估值計算百分比誤差，而不是使用CSV中的誤差欄位
+          error: row.估值 && row.交易價格 ? 
+            ((parseFloat(row.估值) - parseFloat(row.交易價格)) / parseFloat(row.交易價格)) * 100 : 0,
+          date: row.交易年月日 ? new Date(row.交易年月日) : new Date(),
+          // 可選欄位
+          size: row.房屋坪數 ? parseFloat(row.房屋坪數) : 0,
+          floor: row.所在樓層 ? parseFloat(row.所在樓層) : 0,
+          address: row.地址 || '未知地址',
+          // 新增欄位
+          city: row.縣市 || '',
+          district: row.行政區 || '',
+          community: row.社區名稱 || ''
         }));
 
         // 將處理後的資料傳遞給父元件
@@ -246,18 +252,21 @@ export default function CsvUploader({ onDataLoaded, className }) {
         <div className="bg-gray-50 p-3 rounded text-xs text-gray-600">
           <p className="mb-1">CSV 檔案應包含以下欄位:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>lat</strong> - 緯度 (必要, 數值)</li>
-            <li><strong>lng</strong> - 經度 (必要, 數值)</li>
-            <li><strong>actualPrice</strong> - 實際價格 (必要, 數值)</li>
-            <li><strong>estimatedPrice</strong> - 估計價格 (選填, 數值)</li>
-            <li><strong>error</strong> - 誤差百分比 (選填, 數值)</li>
-            <li><strong>date</strong> - 日期 (選填, 日期格式)</li>
-            <li><strong>size</strong> - 房屋坪數 (選填, 數值)</li>
-            <li><strong>floor</strong> - 樓層 (選填, 數值)</li>
-            <li><strong>address</strong> - 地址 (選填, 文字)</li>
+            <li><strong>緯度</strong> - 緯度座標 (必要, 數值)</li>
+            <li><strong>經度</strong> - 經度座標 (必要, 數值)</li>
+            <li><strong>交易價格</strong> - 實際交易價格 (必要, 數值)</li>
+            <li><strong>估值</strong> - 估計價格 (選填, 數值)</li>
+            <li><strong>誤差</strong> - 誤差百分比 (選填, 數值, 將自動根據交易價格和估值計算)</li>
+            <li><strong>交易年月日</strong> - 交易日期 (選填, 日期格式)</li>
+            <li><strong>房屋坪數</strong> - 房屋坪數 (選填, 數值)</li>
+            <li><strong>所在樓層</strong> - 樓層 (選填, 數值)</li>
+            <li><strong>地址</strong> - 地址 (選填, 文字)</li>
+            <li><strong>縣市</strong> - 縣市名稱 (選填, 文字)</li>
+            <li><strong>行政區</strong> - 行政區名稱 (選填, 文字)</li>
+            <li><strong>社區名稱</strong> - 社區名稱 (選填, 文字)</li>
           </ul>
-          <p className="mt-2">範例: lat,lng,actualPrice,estimatedPrice,error,date,size,floor,address</p>
-          <p>25.0330,121.5654,20000000,21000000,5,2023-01-15,45.23,12,"台北市信義區文化路一段309號"</p>
+          <p className="mt-2">範例: 緯度,經度,交易價格,估值,誤差,交易年月日,房屋坪數,所在樓層,地址,縣市,行政區,社區名稱</p>
+          <p>25.0330,121.5654,20000000,21000000,5,2023-01-15,45.23,12,"台北市信義區文化路一段309號","台北市","信義區","信義帝寶"</p>
         </div>
       </div>
     </div>
