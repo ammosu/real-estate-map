@@ -259,12 +259,30 @@ export const PropertyDataProvider = ({ children, properties }) => {
     return result;
   }, [communitiesData]);
 
+  // 生成散點圖數據
+  const scatterData = useMemo(() => {
+    if (!Array.isArray(properties) || properties.length === 0) {
+      return [];
+    }
+    
+    return properties.map(property => ({
+      estimatedPrice: property.estimatedPrice || 0,
+      tradePrice: property.actualPrice || 0,
+      address: property.address || '地址未知',
+      floor: property.floor || 0,
+      area: property.size || 0,
+      date: property.date ? new Date(property.date).toLocaleDateString('zh-TW') : '未知',
+      community: property.community || '未知'
+    }));
+  }, [properties]);
+
   // 提供上下文值
   const value = {
     properties,
     monthlyData,
     communities: communitiesData.communities,
-    communityMonthlyData
+    communityMonthlyData,
+    scatterData
   };
 
   return (

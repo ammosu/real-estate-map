@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import PropertyCard from './PropertyCard';
 import TrendAnalysisChart from './TrendAnalysisChart';
+import PriceCorrelationChart from './PriceCorrelationChart';
 import { PropertyDataProvider } from '../../context/PropertyDataContext';
 
 // 按月份分組並排序的函數
@@ -93,7 +94,7 @@ const groupPropertiesByCommunity = (properties) => {
 
 export default function PropertyCardList({ properties, onClose }) {
   // 頁籤狀態
-  const [activeTab, setActiveTab] = useState('list'); // 'list' 或 'trend'
+  const [activeTab, setActiveTab] = useState('list'); // 'list', 'trend' 或 'correlation'
   
   // 使用 useMemo 緩存分組結果，避免不必要的重新計算
   const groupedProperties = useMemo(() => {
@@ -180,6 +181,16 @@ export default function PropertyCardList({ properties, onClose }) {
         >
           價格趨勢
         </button>
+        <button
+          className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+            activeTab === 'correlation'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('correlation')}
+        >
+          價格關係
+        </button>
       </div>
       
       {/* 房產列表頁籤內容 */}
@@ -246,6 +257,35 @@ export default function PropertyCardList({ properties, onClose }) {
                   <div key={community} className="border-t pt-4">
                     <h5 className="text-md font-medium text-gray-600 mb-3">{community}</h5>
                     <TrendAnalysisChart community={community} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* 價格關係頁籤內容 */}
+      {activeTab === 'correlation' && (
+        <div className="space-y-6">
+          {/* 如果只有一個社區或沒有社區信息，顯示整體關係圖 */}
+          {communities.length <= 1 ? (
+            <PriceCorrelationChart />
+          ) : (
+            <>
+              {/* 先顯示整體關係圖 */}
+              <div className="mb-6">
+                <h4 className="text-lg font-medium text-gray-700 mb-3">整體價格關係</h4>
+                <PriceCorrelationChart />
+              </div>
+              
+              {/* 然後顯示每個社區的關係圖 */}
+              <div className="space-y-8">
+                <h4 className="text-lg font-medium text-gray-700">各社區價格關係</h4>
+                {communities.map(community => (
+                  <div key={community} className="border-t pt-4">
+                    <h5 className="text-md font-medium text-gray-600 mb-3">{community}</h5>
+                    <PriceCorrelationChart community={community} />
                   </div>
                 ))}
               </div>
