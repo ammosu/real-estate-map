@@ -3,6 +3,8 @@ import React, { useMemo, useState } from 'react';
 import PropertyCard from './PropertyCard';
 import TrendAnalysisChart from './TrendAnalysisChart';
 import PriceCorrelationChart from './PriceCorrelationChart';
+import FloorPriceChart from './FloorPriceChart';
+import SizePriceChart from './SizePriceChart';
 import { PropertyDataProvider } from '../../context/PropertyDataContext';
 
 // 按月份分組並排序的函數
@@ -94,7 +96,7 @@ const groupPropertiesByCommunity = (properties) => {
 
 export default function PropertyCardList({ properties, onClose }) {
   // 頁籤狀態
-  const [activeTab, setActiveTab] = useState('list'); // 'list', 'trend' 或 'correlation'
+  const [activeTab, setActiveTab] = useState('list'); // 'list', 'trend', 'correlation' 或 'analysis'
   
   // 使用 useMemo 緩存分組結果，避免不必要的重新計算
   const groupedProperties = useMemo(() => {
@@ -191,6 +193,16 @@ export default function PropertyCardList({ properties, onClose }) {
         >
           價格關係
         </button>
+        <button
+          className={`py-2 px-4 font-medium text-sm focus:outline-none ${
+            activeTab === 'analysis'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('analysis')}
+        >
+          坪數分析
+        </button>
       </div>
       
       {/* 房產列表頁籤內容 */}
@@ -286,6 +298,46 @@ export default function PropertyCardList({ properties, onClose }) {
                   <div key={community} className="border-t pt-4">
                     <h5 className="text-md font-medium text-gray-600 mb-3">{community}</h5>
                     <PriceCorrelationChart community={community} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* 坪數分析頁籤內容 */}
+      {activeTab === 'analysis' && (
+        <div className="space-y-6">
+          {/* 如果只有一個社區或沒有社區信息，顯示整體分析 */}
+          {communities.length <= 1 ? (
+            <>
+              <FloorPriceChart />
+              <div className="mt-6">
+                <SizePriceChart />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* 先顯示整體分析 */}
+              <div className="mb-6">
+                <h4 className="text-lg font-medium text-gray-700 mb-3">整體分析</h4>
+                <FloorPriceChart />
+                <div className="mt-6">
+                  <SizePriceChart />
+                </div>
+              </div>
+              
+              {/* 然後顯示每個社區的分析 */}
+              <div className="space-y-8">
+                <h4 className="text-lg font-medium text-gray-700">各社區分析</h4>
+                {communities.map(community => (
+                  <div key={community} className="border-t pt-4">
+                    <h5 className="text-md font-medium text-gray-600 mb-3">{community}</h5>
+                    <FloorPriceChart community={community} />
+                    <div className="mt-6">
+                      <SizePriceChart community={community} />
+                    </div>
                   </div>
                 ))}
               </div>
