@@ -163,6 +163,53 @@ const ChartComponents = ({ chartData, showErrorMetrics }) => {
     ]
   };
 
+  // 計算誤差指標的最小值和最大值
+  const calculateErrorBounds = () => {
+    // 收集所有誤差指標數據
+    const allErrorValues = [];
+    chartData.forEach(item => {
+      if (item.mape !== undefined) allErrorValues.push(item.mape);
+      if (item.mpe !== undefined) allErrorValues.push(item.mpe);
+      if (item.mapeWithCommunity !== undefined) allErrorValues.push(item.mapeWithCommunity);
+      if (item.mpeWithCommunity !== undefined) allErrorValues.push(item.mpeWithCommunity);
+      if (item.mapeWithCommunityAndTime !== undefined) allErrorValues.push(item.mapeWithCommunityAndTime);
+      if (item.mpeWithCommunityAndTime !== undefined) allErrorValues.push(item.mpeWithCommunityAndTime);
+    });
+
+    // 如果沒有數據，返回默認值
+    if (allErrorValues.length === 0) {
+      return { min: -20, max: 20 };
+    }
+
+    // 計算最小值和最大值
+    const minError = Math.min(...allErrorValues);
+    const maxError = Math.max(...allErrorValues);
+    
+    // 添加10%的邊距
+    const range = maxError - minError;
+    const padding = Math.max(range * 0.1, 2); // 至少2%的邊距
+    
+    return {
+      min: Math.floor(minError - padding),
+      max: Math.ceil(maxError + padding)
+    };
+  };
+
+  // 計算交易數量的最大值
+  const calculateCountMax = () => {
+    const counts = chartData.map(item => item.count);
+    const maxCount = Math.max(...counts);
+    
+    // 添加20%的邊距
+    const padding = Math.ceil(maxCount * 0.2);
+    
+    return maxCount + padding;
+  };
+
+  // 獲取計算後的邊界值
+  const errorBounds = calculateErrorBounds();
+  const countMax = calculateCountMax();
+
   // 價格視圖配置
   const priceOptions = {
     responsive: true,
@@ -220,9 +267,16 @@ const ChartComponents = ({ chartData, showErrorMetrics }) => {
           display: true,
           text: '交易數量'
         },
+        max: countMax,
         grid: {
           drawOnChartArea: false,
         },
+        ticks: {
+          stepSize: 1,
+          callback: function(value) {
+            return Math.floor(value); // 只顯示整數
+          }
+        }
       },
     },
   };
@@ -270,8 +324,8 @@ const ChartComponents = ({ chartData, showErrorMetrics }) => {
           display: true,
           text: '誤差百分比 (%)'
         },
-        min: -20,
-        max: 20,
+        min: errorBounds.min,
+        max: errorBounds.max,
         ticks: {
           callback: function(value) {
             return value + '%';
@@ -286,9 +340,16 @@ const ChartComponents = ({ chartData, showErrorMetrics }) => {
           display: true,
           text: '交易數量'
         },
+        max: countMax,
         grid: {
           drawOnChartArea: false,
         },
+        ticks: {
+          stepSize: 1,
+          callback: function(value) {
+            return Math.floor(value); // 只顯示整數
+          }
+        }
       },
     },
   };
